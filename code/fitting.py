@@ -89,7 +89,7 @@ class fit_data:
                 data[wave_band][slant]["meta"]["processing"]["fitted"] = True
                 data[wave_band][slant]["fit"] = {"fit_params": popt, "covariance_matrix": pcov, "limb_darkening_function": self.limb_darkening_function_name}
                 # data[wave_band][slant]["pixel_indices"], data[wave_band][slant]["pixel_distances"], data[wave_band][slant]["emission_angles"], data[wave_band][slant]["brightness_values"]
-            print("Finished fitting", wave_band, "| Spent", np.around(time.time() - self.cube_start_time, 3), "| expected time left:", np.around((time.time() - self.cube_start_time) * (leng - index - 1),2), end="\r")
+            print("Finished fitting", wave_band, "| Spent", np.around(time.time() - self.cube_start_time, 3), "| expected time left:", np.around((time.time() - self.cube_start_time) *  (index + 1) * (leng - index - 1),2), end="\r")
         print()
         return data
     def fit_all(self):

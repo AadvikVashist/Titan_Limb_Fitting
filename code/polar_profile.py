@@ -249,8 +249,7 @@ class polar_profile:
         band_index: int,
     ):
         self.cube_name = cube.img_id
-        slants = [0, 15, 30, 45, 60, 90, 120, 135, 150,
-                  180, 210, 225, 240, 270, 300, 315, 330]
+        slants = np.arange(0, 360, 15)
 
         degrees = self.north_orientation + np.array(slants)
         cmap = matplotlib.cm.get_cmap("rainbow")
@@ -489,55 +488,3 @@ class analyze_complete_dataset:
 
         check_if_exists_or_write(SETTINGS["paths"]["cumulative_data_path"], base=join_strings(SETTINGS["paths"]["parent_data_path"],
                                  SETTINGS["paths"]["analysis_sub_path"]), save=True, data=all_data, force_write=force_write or appended_data, verbose=True)
-
-    # def sort_and_remove_outliers(self, eme, brightness, threshold=0.5):
-    #     zi = zip(eme, brightness)
-    #     zi = sorted(zi, key=lambda x: x[0])
-    #     eme, brightness = zip(*zi)
-    #     eme = np.array(eme)
-    #     brightness = np.array(brightness)
-    #     mask = eme <= 90-threshold
-
-    #     # Apply the mask to both x and y arrays
-    #     filtered_x = eme[mask]
-    #     filtered_y = brightness[mask]
-    #     return filtered_x, filtered_y
-    # def timeline_figure(self, band: int = None):
-    #     all_fits = {}
-    #     fig, axs = plt.subplots(4, 3, figsize=(12, 8))
-    #     axs = axs.flatten()
-    #     plt.title(str(band))
-    #     for index, cub in enumerate(self.cubes):
-    #         cube = join_strings(self.cubes_location, cub, "analysis/limb/fits")
-    #         bands = os.listdir(cube)
-    #         band_file = [band_f for band_f in bands if band_f.endswith(
-    #             '_' + str(band) + ".pkl")][0]
-    #         with open(join_strings(cube, band_file), 'rb') as handle:
-    #             all_fits[cub] = pickle.load(handle)
-    #     quantity = len(all_fits)
-    #     cmap = matplotlib.colormaps.get_cmap('rainbow')
-    #     for index, (cube, fit) in enumerate(all_fits.items()):
-    #         list_keys = list(fit[0].keys())
-
-    #         for ind, deg in enumerate(list_keys):
-    #             emission, brightness = self.sort_and_remove_outliers(fit[0][deg][1], fit[0][deg][2])
-    #             if ind == 0:
-    #                 axs[index].plot(emission, brightness, label = fit[2]["flyby"] + " " + str(deg),  color= cmap(ind/len(list_keys)*0.75))
-    #             else:
-    #                 axs[index].plot(emission, brightness, label = fit[2]["flyby"] + " " +  str(deg), color= cmap(ind/len(list_keys)*0.75))
-    #         axs[index].set_xlim(0, 95)
-    #         axs[index].legend(fontsize=3)
-    #     fig.tight_layout()
-    #     plt.show()
-    #     return all_fits
-
-    # def generate_figures(self, figures: dict = None):
-    #     for band in range(1, 352, 10):
-    #         # if band < 97 and surface_windows[band-1] == True:
-    #         #     continue
-    #         # elif band > 96 and band in ir_surface_windows:
-    #         #     continue
-    #         self.timeline_figure(band)
-
-
-# analyze.timeline_figure(band = 1)

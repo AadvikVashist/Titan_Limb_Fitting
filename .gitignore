@@ -5,3 +5,5 @@ cumulative*.pkl
 *.pyc
 *~
 *.swp
+
+data/*dev*

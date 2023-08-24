@@ -5,9 +5,14 @@
 		"analysis_sub_path": "cube_analysis",
 		"sorted_sub_path": "sorted_and_filtered",
 		"fitted_sub_path": "fitted",
+		"prod_figures_sub_path": "figures/prod",
+		"dev_figures_sub_path": "figures/dev",
 		"cumulative_data_path": "cumulative_data.pkl",
 		"cumulative_sorted_path": "cumulative_sorted_and_filtered_data.pkl",
-		"cumulative_fitted_path": "cumulative_fitted_data.pkl"
+		"cumulative_fitted_path": "cumulative_fitted_data.pkl",
+		"figure_path_format": "{figure_type}_{fig_name}_{cube_name}_{index}.png",
+		"figure_path_format_dev": "{figure_type}_{fig_name}_{cube_name}_{year}_{month}_{day}_{hour}_{minute}_{second}.png",
+		"figure_file_types": [".png", ".svg", ".pkl"]
 	},
 	"processing": {
 		"redo_all_flyby_processing_calculations": false,
