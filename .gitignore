@@ -2,3 +2,6 @@
 *µm_*.pkl
 code/settings.json
 cumulative*.pkl
+*.pyc
+*~
+*.swp
