@@ -1,0 +1,17 @@
+{
+    "paths" :{
+        "parent_data_path" : "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/data",
+        "cube_sub_path" : "/original_cubes",
+        "analysis_sub_path" : "/analysis",
+        "cumulative_data_path" : "/cumulative_data.pkl"
+
+    },
+    "processing" : {
+        "redo_all_flyby_processing_calculations" : true,
+        "redo_vis_band_processing_calculations" : true,
+        "redo_ir_band_processing_calculations" : true,
+        "redo_data_sorting_and_filtering" : true,
+        "clear_cache" : true
+
+    }
+}
