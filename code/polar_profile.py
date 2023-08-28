@@ -249,7 +249,7 @@ class polar_profile:
         band_index: int,
     ):
         self.cube_name = cube.img_id
-        slants = np.arange(0, 360, 15)
+        slants = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330]
 
         degrees = self.north_orientation + np.array(slants)
         cmap = matplotlib.cm.get_cmap("rainbow")

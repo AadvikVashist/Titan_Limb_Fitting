@@ -3,11 +3,13 @@
 		"parent_data_path": "path/to/Titan_Limb_Fitting/data",
 		"cube_sub_path": "original_cubes",
 		"analysis_sub_path": "cube_analysis",
+		"preview_sub_path": "previews",
 		"sorted_sub_path": "sorted_and_filtered",
 		"fitted_sub_path": "fitted",
 		"prod_figures_sub_path": "figures/prod",
 		"dev_figures_sub_path": "figures/dev",
 		"cumulative_data_path": "cumulative_data.pkl",
+		"cumulative_preview_path": "cumulative_preview_data.pkl",
 		"cumulative_sorted_path": "cumulative_sorted_and_filtered_data.pkl",
 		"cumulative_fitted_path": "cumulative_fitted_data.pkl",
 		"figure_path_format": "{figure_type}_{fig_name}_{cube_name}_{index}.png",
@@ -15,7 +17,8 @@
 		"figure_file_types": [".png", ".svg", ".pkl"]
 	},
 	"processing": {
-		"redo_all_flyby_processing_calculations": false,
+		"redo_all_flyby_processing_calculations": true,
+		"redo_previews": false,
 		"redo_data_sorting_and_filtering": false,
 		"redo_fitting": true,
 		"clear_cache": false

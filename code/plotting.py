@@ -1,5 +1,4 @@
-from polar_profile import analyze_complete_dataset
-from sort_and_filter import sort_and_filter
+from fitting import fit_data
 from get_settings import join_strings, check_if_exists_or_write, SETTINGS
 import re
 import os
@@ -9,7 +8,7 @@ from scipy.optimize import curve_fit
 # area for good figures and random figures
 import matplotlib.pyplot as plt
 import matplotlib
-class fitting_base:
+class plotting_base:
     def __init__(self, devEnvironment: bool = True):
         if devEnvironment == True:
             self.save_dir = join_strings(
@@ -90,61 +89,6 @@ class fitting_base:
                 filtered_data[cube] = data[cube]
             return filtered_data
     
-    # def fit(self, data: dict):
-    #     leng = len(data)
-    #     for index, (wave_band, wave_data) in enumerate(data.items()):
-    #         for slant, slant_data in wave_data.items():
-    #             emission_angles = np.array(slant_data["emission_angles"])
-    #             brightness_values = np.array(slant_data["brightness_values"])
-    #             popt, pcov = self.limb_darkening_laws(
-    #                 emission_angles, brightness_values)
-    #             data[wave_band][slant]["meta"]["processing"]["fitted"] = True
-    #             data[wave_band][slant]["fit"] = {
-    #                 "fit_params": popt, "covariance_matrix": pcov, "limb_darkening_function": self.limb_darkening_function_name}
-    #             # data[wave_band][slant]["pixel_indices"], data[wave_band][slant]["pixel_distances"], data[wave_band][slant]["emission_angles"], data[wave_band][slant]["brightness_values"]
-    #         print("Finished fitting", wave_band, "| Spent", np.around(time.time() - self.cube_start_time, 3),
-    #               "| expected time left:", np.around((time.time() - self.cube_start_time) * (leng - index - 1), 2), end="\r")
-    #     print()
-    #     return data
-
-    # def fit_all(self):
-    #     data = self.get_filtered_data()
-    #     force_write = (SETTINGS["processing"]["clear_cache"]
-    #                    or SETTINGS["processing"]["redo_fitting"])
-    #     appended_data = False
-    #     cube_count = len(data)
-    #     self.start_time = time.time()
-
-    #     for index, (cube_name, cube_data) in enumerate(data.items()):
-    #         if os.path.exists(join_strings(self.save_dir, cube_name + ".pkl")) and not force_write:
-    #             try:
-    #                 data[cube_name] = check_if_exists_or_write(
-    #                     join_strings(self.save_dir, cube_name + ".pkl"), save=False)
-    #                 print("fitted data already exists. Skipping...")
-    #                 continue
-    #             except:
-    #                 print("fitted data corrupted. Processing...")
-    #         elif not force_write:
-    #             appended_data = True
-    #         self.cube_start_time = time.time()
-    #         # only important line in this function
-    #         data[cube_name] = self.fit(cube_data)
-
-    #     # Calculate expected time left based on the average time per cube
-    #         check_if_exists_or_write(join_strings(
-    #             self.save_dir, cube_name + ".pkl"), data=data[cube_name], save=True, force_write=True)
-    #         print("Total time for cube: ", np.around(time.time() - self.cube_start_time, 3), "seconds | Expected time left:",
-    #               np.around((time.time() - self.start_time) / (index + 1) * (cube_count - index - 1), 2), "seconds")
-
-    #     if os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"])) and (not force_write or appended_data):
-    #         print("Since fitted data already exists, but new data has been appended ->")
-    #         check_if_exists_or_write(join_strings(
-    #             self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data=data, save=True, force_write=True, verbose=True)
-    #     else:
-    #         check_if_exists_or_write(join_strings(
-    #             self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data=data, save=True, force_write=True, verbose=True)
-
-
     def timeline_figure(self, band: int = None):
         all_fits = {}
         fig, axs = plt.subplots(4, 3, figsize=(12, 8))
@@ -164,22 +108,42 @@ class fitting_base:
             axs[index].legend(fontsize=3)
             axs[index].set_title(cube)
         fig.tight_layout()
-        plt.show()
-        return all_fits
+        try:
+            check_if_exists_or_write(self.get_fig_path("timeline", str(band), "all") + ".png", save=True, data="sdfs", force_write=True, verbose=True)
+        except:
+            pass
+        fig.savefig(self.get_fig_path("timeline", str(band), "all") + ".png", dpi=450)
+        # plt.show()
 
-    # def generate_figures(self, figures: dict = None):
-    #     for band in range(1, 352, 10):
-    #         # if band < 97 and surface_windows[band-1] == True:
-    #         #     continue
-    #         # elif band > 96 and band in ir_surface_windows:
-    #         #     continue
-    #         self.timeline_figure(band)
+    def look_at_fits(self, cube_index: int = None, band: int = None):
+        data = self.get_fitted_data()
+        cube = data[list(data.keys())[cube_index]]
+        band = cube[list(cube.keys())[band]]
+        fit_obj = fit_data(fit_type="quad")
+        for slant, slant_data in band.items():
 
+            x = fit_obj.emission_to_normalized(np.linspace(np.min(slant_data["emission_angles"]), np.max(slant_data["emission_angles"]), 100))
+            fit_obj.I_0 = slant_data["fit"]["fit_params"]["I_0"]
+            
+            y = [fit_obj.quadratic_limb_darkening(xs, slant_data["fit"]["fit_params"]["u1"], slant_data["fit"]["fit_params"]["u2"]) for xs in x]
+            plt.plot(x, y)
+            plt.plot(fit_obj.emission_to_normalized(slant_data["emission_angles"]), slant_data["brightness_values"])
+            plt.show()
+        # for index, (cube, cube_fits) in enumerate(cube.items()):
+        #     key = [ke for ke in cube_fits.keys() if ke.split("_")[1] == str(band)][0]
+        #     wavelength_fit = cube_fits[key]
+        #     length = len(wavelength_fit)
+        #     for ind, (degree, slant) in enumerate(wavelength_fit.items()):
+        #         plt.plot(slant["emission_angles"], slant["brightness_values"], label = str(degree))
+        #     plt.set_xlim(0, 95)
+        #     plt.set_ylim(bottom = 0)
+        plt.legend(fontsize=6)
+        # plt.title("")
+x = plotting_base()
 
-x = fitting_base()
-
-figure_waves = np.linspace(1, 352, 4)
-for wave in figure_waves:
-    print(wave)
-    x.timeline_figure(band=int(wave))
-# print(x.get_fig_path("test", "test", "test"))
+x.look_at_fits(cube_index=0, band=1)
+# figure_waves = np.linspace(1, 352, 4)
+# for wave in figure_waves:
+#     print(wave)
+#     x.timeline_figure(band=int(wave))
+# # print(x.get_fig_path("test", "test", "test"))

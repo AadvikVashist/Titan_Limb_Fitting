@@ -13,3 +13,8 @@
 //6. Plot brightnes vs emission angle for each fit (each angle) 
 //7. Get the paramters from the limb darkening laws (in the end he would want u1 and u2) - report u1 + u2 and u1 - u2
 
+// Thus, a more natural set of limb-darkening parameters is (u1 + u2) and (u1 - u2).
+//The former describes the total magnitude of the limb-darkening variation and is well constrained by the observations
+//while the latter describes the amount of curvature in the limb-darkening function and is relatively poorly constrained.
+//For explanatory purposes below, we shall refer to these combinations rather than to u1 and u2 individually,
+// and moreover we shall adopt the approximation that u ≃ u1 + u2.

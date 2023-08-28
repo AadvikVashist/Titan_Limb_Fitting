@@ -6,4 +6,5 @@ cumulative*.pkl
 *~
 *.swp
 
-data/*dev*
+data/*/dev
+__pycache__
