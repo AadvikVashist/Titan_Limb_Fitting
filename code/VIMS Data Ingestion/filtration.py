@@ -1,0 +1,363 @@
+from datetime import datetime
+import numpy as np
+import pandas as pd
+import pickle
+from thefuzz import fuzz
+import os
+import re
+import webbrowser
+
+
+def convert_dates(date):
+    date_list = date.replace(":", "-").split("-")
+    date_list = [d for d in date_list if len(d) > 0]
+    date = '-'.join(date_list[0:3])
+    if len(date_list) == 3:
+        date += "-00:00:00"
+    else:
+        addition = ':' + ':'.join((6 - len(date_list))*["00"])
+        date += "-" + ":".join(date_list[3::]) + addition
+    return date
+
+
+def fix_date(date):
+    date = date.replace(" at ", "-").replace("/",
+                                             "-").replace(":", "-").split("-")
+    date = '-'.join(date)
+    return date
+
+
+def get_limb(csv):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "limb vis" in h.lower()][0]
+    return [header] + [c for c in csv if "yes" in c[header_index].lower()]
+
+
+def get_percentage(csv, min):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "percentage" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if float(c[header_index]) >= min]
+
+
+def get_vis(csv):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "sampling mode" in h.lower()][0]
+    header_split_index = [index for index, h in enumerate(
+        header[header_index].split("|")) if "vis" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index].lower().split("|")[header_split_index]]
+
+
+def get_ir(csv):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "sampling mode" in h.lower()][0]
+    header_split_index = [index for index, h in enumerate(
+        header[header_index].split("|")) if "ir" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index].lower().split("|")[header_split_index]]
+
+
+def get_vis_and_ir(csv):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "sampling mode" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index]]
+
+
+def get_filtered_phase(csv, phase_list: list):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "phase" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and float(c[header_index]) >= min(phase_list) and float(c[header_index]) <= max(phase_list)]
+
+
+def get_info_cubes(csv):
+    header = csv[0]
+    header_indexes = set([index for row in csv for index,
+                         c in enumerate(row) if c == "_"])
+    return [header] + [row for row in csv[1::] if all([col != "_" for col in [row[i] for i in header_indexes]])]
+
+
+def get_refined_samples(csv, x, y):
+    header = csv[0]
+    minx = min(x)
+    maxx = max(x)
+    miny = min(y)
+    maxy = max(y)
+    header_index = [index for index, h in enumerate(
+        header) if "samples" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and int(c[header_index].split("x")[0]) >= minx and int(c[header_index].split("x")[0]) <= maxx and int(c[header_index].split("x")[1]) >= miny and int(c[header_index].split("x")[1]) <= maxy]
+
+
+def get_targeted_flyby(csv):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "flyby" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "|" in c[header_index] and "T" in c[header_index].split(" | ")[0]]
+
+
+def get_mission(csv, mission_ints):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "mission" in h.lower()][0]
+    mission_list = [c[header_index] for c in csv[1::]]
+    # sort based on index of occurence in mission_list
+    missions = sorted(list(set(mission_list)), key=mission_list.index)
+    if type(mission_ints) == list and len(mission_ints) > 1:
+        for index in range(len(mission_ints)):
+            if type(mission_ints[index]) == str:
+                mission = [i for i, m in enumerate(
+                    missions) if fuzz.ratio(m, mission_ints[index]) > 70]
+                if len(mission) != 1:
+                    raise ValueError("Mission name not found")
+                else:
+                    mission_ints[index] = mission[0]
+        return [header] + [c for c in csv[1::] if any([missions[miss] in c[header_index] for miss in mission_ints])]
+    else:
+
+        if type(mission_ints) == list and len(mission_ints) == 1:
+            mission_ints = mission_ints[0]
+        if type(mission_ints) == str:
+            mission = [i for i, m in enumerate(
+                missions) if fuzz.ratio(m, mission_ints) > 70]
+        if len(mission) != 1:
+            raise ValueError("Mission name not found")
+        else:
+            mission_ints = mission[0]
+        return [header] + [c for c in csv[1::] if missions[mission_ints] in c[header_index]]
+
+
+def filter_distance(csv, distance):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "dist" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and max(distance) >= float(c[header_index].replace(",", "").split(" ")[0]) >= min(distance)]
+
+
+def filter_resolution(csv, resolution):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "resolution" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and max(resolution) >= float(c[header_index].split(" ")[0]) >= min(resolution)]
+
+
+def filter_dates(csv, start_date, end_date):
+    start_date = convert_dates(start_date)
+    end_date = convert_dates(end_date)
+    start = datetime.strptime(start_date, "%Y-%m-%d-%H:%M:%S")
+    end = datetime.strptime(end_date, "%Y-%m-%d-%H:%M:%S")
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "time" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and start <= datetime.strptime(fix_date(c[header_index]), "%d-%m-%Y-%H-%M-%S") <= end]
+
+
+def get_filtered_res(csv, resolution):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "samples lines" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and int(c[header_index].split("x")[0]) >= resolution and int(c[header_index].split("x")[1]) > resolution]
+
+
+def get_limb(csv, limb_or_no):
+    if limb_or_no:
+        limb_or_no = "Yes"
+    else:
+        limb_or_no = "No"
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "limb visible" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and c[header_index] == limb_or_no]
+
+
+def filter_km_pixel(csv, km_pixel: int):
+    # filter by the resolution (km/pixel).
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "mean resolution" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and int(c[header_index].split(" ")[0]) <= km_pixel]
+
+
+def get_equatorial_latitude(csv, latitudes: list, na_accepted=False):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "sub-spacecraft point" in h.lower()][0]
+    pattern = r'(-?\d+) N'
+    if na_accepted:
+        return [header] + [c for c in csv[1::] if "n/a" in c[header_index] or re.search(pattern, c[header_index]).group(1) and int(re.search(pattern, c[header_index]).group(1)) > latitudes[0] and int(re.search(pattern, c[header_index]).group(1)) <= latitudes[1]]
+    else:
+        return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and re.search(pattern, c[header_index]).group(1) and int(re.search(pattern, c[header_index]).group(1)) > latitudes[0] and int(re.search(pattern, c[header_index]).group(1)) <= latitudes[1]]
+
+
+def filter_cubes_by_name(csv, names: list):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "name" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and any([name in c[header_index] for name in names])]
+
+
+def select_cubes_based_on_images(cubes):
+    base = "https://vims.univ-nantes.fr/cube/"
+    header = cubes[0]
+    name_index = [index for index, h in enumerate(
+        header) if "name" in h.lower()][0]
+
+    for cube in cubes[1::]:
+        cube_name = cube[name_index]
+        webbrowser.open_new_tab(base + cube_name)
+        #1
+        # 4/8 1519673575_1
+        #1
+        #1
+        #1/4
+        #1
+        #2/2
+        #1
+        while True:
+            inp = input("Do you want to keep this cube? (y/n)")
+            if inp.lower() == "" or inp.lower() == "y":
+                break
+            elif inp.lower() == "n":
+                cubes.remove(cube)
+                break
+    return cubes
+
+
+def get_names_of_cubes(cubes):
+    header = cubes[0]
+    name_index = [index for index, h in enumerate(
+        header) if "name" in h.lower()][0]
+    return [cube[name_index] for cube in cubes[1::]]
+
+
+def get_square_cubes(csv):
+    header = csv[0]
+    header_index = [index for index, h in enumerate(
+        header) if "samples lines" in h.lower()][0]
+    return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and c[header_index].split("x")[0] == c[header_index].split("x")[1]]
+
+# Use a list comprehension to extract the values from the list of strings
+if __name__ == "__main__":
+    with open(os.path.join('/'.join(__file__.split("/")[0:-1]), "data/combined_nantes.pickle"), "rb") as f:
+        # Use pickle to dump the variable into the file
+        data = pickle.load(f)
+
+    # limb = get_limb(data)
+    refined_search = get_info_cubes(data)
+    refined_search = get_targeted_flyby(refined_search)
+    refined_search = get_filtered_phase(refined_search, [0, 20])
+    refined_search = get_vis_and_ir(refined_search)
+    refined_search = get_filtered_res(refined_search, 30)
+    refined_search = get_limb(refined_search, True)
+    refined_search = filter_km_pixel(refined_search, 200)
+    search_with_na = get_equatorial_latitude(refined_search, [-20, 20], True)
+    search_without_na = get_equatorial_latitude(
+        refined_search, [-20, 20], False)
+    search_with_na = [
+        x for x in search_with_na if x not in search_without_na[1::]]
+
+    # cubers = ['1487070016_1', '1487081497_1', '1487088092_1', '1487088239_1',
+    #           '1560489660_1', '1487115410_1', '1477437155_1', '1477442751_6',
+    #           '1477442865_1', '1477444950_1',
+    #           '1560494730_1', '1560497005_1', '1560498393_1', '1629929753_1',
+    #           '1629931147_1', '1629935228_1', '1629939309_1', '1629943530_1',
+    #           '1629946099_1', '1629949147_1', '1629951950_1', '1629954753_1',
+    #           '1629957856_1', '1629960553_1', '1629963250_1', '1629965947_1',
+    #           '1629968824_1', '1629971585_1', '1634082284_1', '1634084887_1']
+    cubes_with_spacecraft = ['1487070016_1', '1487081497_1', '1487088092_1', '1477437155_1',
+              '1477442751_6', '1477442865_1', '1477444950_1', '1477456632_1',
+              '1477456872_1', '1477457253_1', '1560489660_1', '1560494730_1',
+              '1560497005_1', '1560498393_1', '1629929393_1', '1629929753_1',
+              '1629931147_1', '1629935228_1', '1629939309_1', '1629943530_1',
+              '1629946099_1', '1629949147_1', '1629951950_1', '1629954753_1',
+              '1629957856_1', '1629960553_1', '1629963250_1', '1629965947_1',
+              '1629968824_1', '1629971585_1', '1634082284_1', '1634084887_1']
+    cubes_with_no_sub_spacecraft = ['1519655864_1', '1519656212_1', '1519656559_1', '1519656906_1', '1519657253_1', '1519657601_1', '1519657948_1', '1519658295_1', '1519658643_1', '1519658990_1', '1519659337_1', '1519659684_1', '1519660032_1', '1519660379_1', '1519660726_1', '1519661073_1', '1519661421_1', '1519661768_1', '1519662115_1', '1519662462_1', '1519662810_1', '1519663157_1', '1519663504_1', '1519663852_1', '1519664199_1', '1519664546_1', '1519664893_1', '1519665241_1', '1519665588_1', '1519665935_1', '1519666282_1', '1519666630_1', '1519666977_1', '1519667324_1', '1519667671_1', '1519668019_1', '1519668366_1', '1519668713_1', '1519669061_1', '1519669408_1', '1519669755_1', '1519670102_1', '1519670450_1', '1519670797_1', '1519671144_1', '1519671491_1', '1519671839_1', '1519672186_1', '1519672533_1', '1519672881_1', '1519673228_1', '1519673575_1', '1519673922_1', '1519674270_1', '1519674617_1', '1519674964_1', '1519675311_1', '1519675659_1', '1519676006_1', '1519676353_1', '1519676700_1', '1519677048_1',
+                                    '1519677395_1', '1519677742_1', '1519678090_1', '1519678437_1', '1519678784_1', '1519679131_1', '1519679479_1', '1519679826_1', '1519680173_1', '1519680520_1', '1519680868_1', '1519681215_1', '1519681562_1', '1519681910_1', '1519682257_1', '1519682604_1', '1519682951_1', '1519683299_1', '1519683646_1', '1519683993_1', '1519684340_1', '1519684688_1', '1519685035_3', '1519685714_1', '1561878211_1', '1561880529_1', '1561884999_1', '1561885717_1', '1561886435_1', '1561887153_1', '1561887871_1', '1561888589_1', '1561889307_1', '1561890025_1', '1561890743_1', '1561891461_1', '1561892179_1', '1561892897_1', '1561893615_1', '1561894333_1', '1561895051_1', '1561895769_1', '1561896487_1', '1649210035_1', '1649215526_1', '1649219994_1', '1649220408_1', '1649223839_1', '1649224228_1', '1649227156_1', '1649228915_1', '1649229239_1', '1681921717_1', '1681926717_1', '1681931457_1', '1681936817_1', '1681943777_1', '1702511415_1', '1702534693_1', '1702538283_1', '1702540065_1', '1702543693_1', '1702548750_1']
+    # good cubes
+    combined_best_cubes = ['1487070016_1', '1487081497_1', '1487088092_1', '1477437155_1',
+              '1477442751_6', '1477442865_1', '1477444950_1', '1477456632_1',
+              '1477456872_1', '1477457253_1', '1560489660_1', '1560494730_1',
+              '1560497005_1', '1560498393_1', '1629929393_1', '1629929753_1',
+              '1629931147_1', '1629935228_1', '1629939309_1', '1629943530_1',
+              '1629946099_1', '1629949147_1', '1629951950_1', '1629954753_1',
+              '1629957856_1', '1629960553_1', '1629963250_1', '1629965947_1',
+              '1629968824_1', '1629971585_1', '1634082284_1', '1634084887_1',
+              '1519655864_1', '1519656212_1', '1519656559_1', '1519656906_1',
+              '1519657253_1', '1519657601_1', '1519657948_1', '1519658295_1',
+              '1519658643_1', '1519658990_1', '1519659337_1', '1519659684_1',
+              '1519660032_1', '1519660379_1', '1519660726_1', '1519661073_1',
+              '1519661421_1', '1519661768_1', '1519662115_1', '1519662462_1',
+              '1519662810_1', '1519663157_1', '1519663504_1', '1519663852_1',
+              '1519664199_1', '1519664546_1', '1519664893_1', '1519665241_1',
+              '1519665588_1', '1519665935_1', '1519666282_1', '1519666630_1',
+              '1519666977_1', '1519667324_1', '1519667671_1', '1519668019_1',
+              '1519668366_1', '1519668713_1', '1519669061_1', '1519669408_1',
+              '1519669755_1', '1519670102_1', '1519670450_1', '1519670797_1',
+              '1519671144_1', '1519671491_1', '1519671839_1', '1519672186_1',
+              '1519672533_1', '1519672881_1', '1519673228_1', '1519673575_1',
+              '1519673922_1', '1519674270_1', '1519674617_1', '1519674964_1',
+              '1519675311_1', '1519675659_1', '1519676006_1', '1519676353_1',
+              '1519676700_1', '1519677048_1', '1519677395_1', '1519677742_1',
+              '1519678090_1', '1519678437_1', '1519678784_1', '1519679131_1',
+              '1519679479_1', '1519679826_1', '1519680173_1', '1519680520_1',
+              '1519680868_1', '1519681215_1', '1519681562_1', '1519681910_1',
+              '1519682257_1', '1519682604_1', '1519682951_1', '1519683299_1',
+              '1519683646_1', '1519683993_1', '1519684340_1', '1519684688_1',
+              '1519685035_3', '1519685714_1', '1561878211_1', '1561880529_1',
+              '1561884999_1', '1561885717_1', '1561886435_1', '1561887153_1',
+              '1561887871_1', '1561888589_1', '1561889307_1', '1561890025_1',
+              '1561890743_1', '1561891461_1', '1561892179_1', '1561892897_1',
+              '1561893615_1', '1561894333_1', '1561895051_1', '1561895769_1',
+              '1561896487_1', '1649210035_1', '1649215526_1', '1649219994_1',
+              '1649220408_1', '1649223839_1', '1649224228_1', '1649227156_1',
+              '1649228915_1', '1649229239_1', '1681921717_1', '1681926717_1',
+              '1681931457_1', '1681936817_1', '1681943777_1', '1702511415_1',
+              '1702534693_1', '1702538283_1', '1702540065_1', '1702543693_1',
+              '1702548750_1']
+    cubers = ['1477437155_1', '1477456632_1', '1477456872_1', '1477457253_1', '1519657253_1', '1519661421_1', '1519665935_1', '1519673575_1', '1519675659_1', '1519678090_1', '1519679131_1', '1519679826_1', '1560489660_1', '1561892179_1', '1629935228_1', '1629939309_1', '1629951950_1', '1629963250_1', '1634084887_1', '1681926717_1', '1681931457_1', '1702548750_1']
+
+    refined_search = filter_cubes_by_name(refined_search, cubers)
+    dictionary = {}
+    header_index =  [index for index, h in enumerate(refined_search[0]) if "flyby" in h.lower()][0]
+    for cube in refined_search[1::]:
+        if cube[header_index] not in dictionary:
+            dictionary[cube[header_index]] = [cube]
+        else:
+            dictionary[cube[header_index]].append(cube)
+
+    # square_cubes = get_square_cubes(refined_search)
+    refined_search = select_cubes_based_on_images(refined_search)
+    searched = get_names_of_cubes(refined_search)
+
+    #['1477437155_1', '1519673575_1', '1560489660_1', '1561892179_1', '1629935228_1', '1634084887_1', '1681931457_1', '1702548750_1']
+    print(searched)
+    # searched = get_names_of_cubes(square_cubes)
+    print(searched)
+    x = 0
+    # searched = get_names_of_cubes(refined_search)
+    # refined_search = get_percentage(refined_search, 0.5)
+
+    # refined_search = get_filtered_phase(refined_search, [0, 40])
+    # refined_search = get_refined_samples(refined_search,[10,150],[10,150])
+    # # refined_search = get_mission(refined_search, ["equinox","solsticesd"])
+    # # refined_search = filter_dates(refined_search, "2013-01-01-00:00", "2020-01-01")
+    # refined_search = filter_resolution(refined_search, [50, 500])
+    # refined_search = filter_distance(refined_search, [50, 1000000])
+
+    print(refined_search)
+
+    # limb brightening
+    # latitudonal strcutre
+    # IR wavelengths and spherical mapping
+    # Deposits of lightening
+
+    # lightening should look like the same as earth, a plasma nitrogen, should be all wavelengths
+"""
+1. Get all the cubes without despiker
+2. Analysis. 
+3.
+
+"""

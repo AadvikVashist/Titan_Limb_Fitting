@@ -55,10 +55,15 @@ class sort_and_filter:
             self.cube_start_time = time.time()
             data[cube_name] = self.sort_and_filter(cube_data)
             check_if_exists_or_write(join_strings(self.save_dir, cube_name + ".pkl"), data=data[cube_name], save=True, force_write=True)
-            print("Total time for cube: ", np.around(time.time() - self.cube_start_time, 3), "seconds | Expected time left:", np.around((time.time() - self.start_time) / (index + 1) * (cube_count - index - 1),2), "seconds")
-        
-        if os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_sorted_path"])) and (not force_write or appended_data):
+            time_spent = np.around(time.time() - self.cube_start_time, 3)
+            percentage_completed = (index + 1) / cube_count
+            total_time_left = time_spent / percentage_completed - time_spent
+            print("Cube", index + 1,"of", cube_count , "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
+                 np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")        
+        if (os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_sorted_path"])) and appended_data):
             print("Sorted data already exists, but new data has been appended")
             check_if_exists_or_write(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_sorted_path"]), data = data, save=True, force_write=True)
-        else:
+        elif force_write:
             check_if_exists_or_write(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_sorted_path"]), data = data, save=True, force_write=True)
+        else:
+            print("Sorted not changed since last run. No changes to save...")

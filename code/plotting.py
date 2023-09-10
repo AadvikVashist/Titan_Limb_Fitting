@@ -8,6 +8,9 @@ from scipy.optimize import curve_fit
 # area for good figures and random figures
 import matplotlib.pyplot as plt
 import matplotlib
+import pyvims
+
+BANDS_WE_DONT_LIKE = [0, 55, 56, 57, 63, 65, 66, 67, 79, 80, 81, 82, 83, 84, 91, 92, 93, 94, 95, 96, 99, 100, 101, 106, 107, 108, 109, 110, 119, 120, 121, 122, 126, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 147, 163, 164, 165, 166, 167, 168, 169, 170, 171, 175, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 196, 198, 199, 200, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 223, 224, 225, 226, 229, 230, 231, 232, 233, 234, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352]
 class plotting_base:
     def __init__(self, devEnvironment: bool = True):
         if devEnvironment == True:
@@ -117,15 +120,16 @@ class plotting_base:
 
     def look_at_fits(self, cube_index: int = None, band: int = None):
         data = self.get_fitted_data()
+        data = dict(sorted(data.items()))
         cube = data[list(data.keys())[cube_index]]
         band = cube[list(cube.keys())[band]]
         fit_obj = fit_data(fit_type="quad")
         for slant, slant_data in band.items():
-
-            x = fit_obj.emission_to_normalized(np.linspace(np.min(slant_data["emission_angles"]), np.max(slant_data["emission_angles"]), 100))
-            fit_obj.I_0 = slant_data["fit"]["fit_params"]["I_0"]
             
-            y = [fit_obj.quadratic_limb_darkening(xs, slant_data["fit"]["fit_params"]["u1"], slant_data["fit"]["fit_params"]["u2"]) for xs in x]
+            x = fit_obj.emission_to_normalized(np.linspace(np.min(slant_data["emission_angles"]), np.max(slant_data["emission_angles"]), 100))
+            # fit_obj.I_0 = slant_data["fit"]["fit_params"]["I_0"]
+            
+            y = [fit_obj.quadratic_limb_darkening(xs,slant_data["fit"]["fit_params"]["I_0"],  slant_data["fit"]["fit_params"]["u1"], slant_data["fit"]["fit_params"]["u2"]) for xs in x]
             plt.plot(x, y)
             plt.plot(fit_obj.emission_to_normalized(slant_data["emission_angles"]), slant_data["brightness_values"])
             plt.show()
@@ -139,11 +143,112 @@ class plotting_base:
         #     plt.set_ylim(bottom = 0)
         plt.legend(fontsize=6)
         # plt.title("")
-x = plotting_base()
+    def coeff_vs_deg(self, band: int = None):
+        data = self.get_fitted_data()
+        data = dict(sorted(data.items()))
+        fig, axs = plt.subplots(4, 3, figsize=(12, 8))
+        axs = axs.flatten()
+        
+        handles = []  # To store legend handles
+        for index, (cube, cube_fits) in enumerate(data.items()):
+            key = [ke for ke in cube_fits.keys() if ke.split("_")[1] == str(band)][0]
+            wavelength_fit = cube_fits[key]
+            u_plus = []
+            u_minus = []
+            axs[index].set_title(cube)
+            axs[index].minorticks_on()
+            axs[index].set_xticks(np.arange(0,361, 60))
+            axs[index].set_yticks(np.arange(-2,3.1, 1, dtype=int))
+            # axs[index].set_ylabel("N/")
+            axs[index].set_xlim(-20,380)
+            axs[index].set_ylim(-1.5,3)
+            for slant, slant_data in wavelength_fit.items():
+                u1 = axs[index].scatter(slant, slant_data["fit"]["fit_params"]["u1"], color=(0, 0, 0))
+                u2 = axs[index].scatter(slant, slant_data["fit"]["fit_params"]["u2"], color=(1, 0, 0))
 
-x.look_at_fits(cube_index=0, band=1)
+                u_plus.append(slant_data["fit"]["fit_params"]["u1"] + slant_data["fit"]["fit_params"]["u2"])
+                u_minus.append(slant_data["fit"]["fit_params"]["u1"] - slant_data["fit"]["fit_params"]["u2"])
+
+            line_plus, = axs[index].plot(list(wavelength_fit.keys()), u_plus, color=(0, 1, 0))
+            line_minus, = axs[index].plot(list(wavelength_fit.keys()), u_minus, color=(0, 0, 1))
+            if index == 0:
+                handles.append(u1)  # Add scatter plot handle to the list 
+                handles.append(u2)
+                handles.append(line_plus)  # Add line plot handle to the list
+                handles.append(line_minus)  # Add line plot handle to the list
+            elif index >= 9:
+                axs[index].set_xlabel("Slant Angle (˚)")
+            # Don't add labels to individual lines, we'll add them to the global legend
+            # axs[index].legend([line_plus, line_minus], )
+
+        # Create a global legend outside the loop
+        fig.legend(handles, ["µ1", "µ2","µ1 + µ2", "µ1 - µ2"])
+        fig.subplots_adjust(wspace=0.12, hspace=0.3, top=0.95, bottom=0.05, left=0.05, right=0.95)
+        # Customize the markers in the legend
+        # for legend_item in global_legend.legendHandles:
+            # legend_item.set_markerfacecolor('black')  # Set the marker face color
+            # legend_item.set_markeredgecolor('black')  # Set the marker edge color
+            # legend_item.set_markersize(10)  # Set the marker size
+                
+        plt.show()
+
+        # for index, (cube, cube_fits) in enumerate(cube.items()):
+        #     key = [ke for ke in cube_fits.keys() if ke.split("_")[1] == str(band)][0]
+        #     wavelength_fit = cube_fits[key]
+        #     length = len(wavelength_fit)
+        #     for ind, (degree, slant) in enumerate(wavelength_fit.items()):
+        #         plt.plot(slant["emission_angles"], slant["brightness_values"], label = str(degree))
+        #     plt.set_xlim(0, 95)
+        #     plt.set_ylim(bottom = 0)
+        # plt.legend(fontsize=6)
+    def select_good_and_bad_bands(self):
+        fitted_data = self.get_fitted_data()
+        cubes = {}
+        rejected =[0]
+        if os.path.exists(os.curdir + "/rejected_bands.pkl"):
+            rejected = check_if_exists_or_write(os.curdir + "/rejected_bands.pkl", save=False, verbose=True)
+            
+        for cube in fitted_data.keys():
+            cube_vis = pyvims.VIMS(cube + "_vis.cub", join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["cube_sub_path"],cube), channel="vis")
+            cube_ir = pyvims.VIMS(cube + "_ir.cub",  join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["cube_sub_path"],cube), channel="ir")
+            cubes[cube] = {"vis": cube_vis, "ir": cube_ir}
+        for band in range(1,353):
+            if band < np.max(rejected):
+                continue
+            import matplotlib.pyplot as plt
+            fig, axs = plt.subplots(4,3, figsize=(14,8))
+            axs = axs.flatten()
+            for index, (cube, data) in enumerate(cubes.items()):
+                axs[index].set_title(cube)
+                if band <= 96:
+                    axs[index].imshow(data["vis"][band], cmap="gray")
+                else:
+                    axs[index].imshow(data["ir"][band], cmap="gray")
+            plt.waitforbuttonpress(5)
+            plt.close("all")
+            while True:
+                inp = input(str(band) + " Good? (y/n)")
+                if "y" in inp:
+                    break
+                if "n" in inp:
+                    rejected.append(band)
+                    break
+            
+        check_if_exists_or_write(os.curdir + "/rejected_bands.pkl", save=True, data=rejected, force_write=True, verbose=True)
+        return rejected
+
+x = plotting_base()
+# var = x.select_good_and_bad_bands()
+# print(var)
+for i in range(12):
+    x.look_at_fits(cube_index=i,band=118)
+
+
+#index 1, North is straight right
 # figure_waves = np.linspace(1, 352, 4)
 # for wave in figure_waves:
 #     print(wave)
 #     x.timeline_figure(band=int(wave))
 # # print(x.get_fig_path("test", "test", "test"))
+
+

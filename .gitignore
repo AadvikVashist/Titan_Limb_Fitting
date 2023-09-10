@@ -5,6 +5,6 @@ cumulative*.pkl
 *.pyc
 *~
 *.swp
-
+data/previews/
 data/*/dev
 __pycache__

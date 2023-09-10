@@ -1,3 +1,8 @@
+import pickle
+from get_settings import join_strings, check_if_exists_or_write, SETTINGS
+import cv2
+import pyvims
+import json
 import os
 import os.path as path
 import matplotlib.pyplot as plt
@@ -17,24 +22,25 @@ from scipy.ndimage import gaussian_filter
 from scipy.interpolate import CubicSpline, PchipInterpolator
 from scipy.optimize import brentq
 from scipy.stats import linregress
-import pickle
-import json
-import pyvims
+import scipy.signal
+# Define the sawtooth function
+# def sawtooth(x, amplitude, frequency, phase, offset):
+#     return amplitude * (2 * (x * frequency + phase) - 2 * np.floor(x * frequency + phase + 0.5)) + offset
+
+
+def triangle_wave(x, amplitude, frequency, phase, offset):
+    return amplitude * np.abs(np.mod(x / (360 / frequency) + phase, 1) - 0.5) * 4 - amplitude + offset
 
 # flyby directory location
 # name of csv containing all data (inside flyby folder)
 # name of flyby image data (inside flyby folder)
 # save loation (default to flyby data)
-import numpy as np
-import cv2
 
 # surface_windows = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, True, True, True, False, False, False, False, False, False, True, True, True, True, False, False, False, False, False, True, True, True, True, False, False, False, False, False, False, False, False, False, False, False, True, True, True, True, True, False, False, False, False, False, False, False, False, False, False, False, True, True]
 # surface_windows = [False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, True, True,
 #                    True, True, False, False, False, False, False, False, True, True, True, True, False, False, False, False, False, True, True, True, True, False, False, False, False, False, False, False, False, False, False, False, True, True, True, True, True, False, False, False, False, False, False, False, False, False, False, False, True, True]
 # ir_surface_windows = [99, 100, 106, 107, 108, 109, 119, 120, 121, 122, 135, 136, 137, 138, 139, 140, 141, 142, 163, 164,
 #                       165, 166, 167, 206, 207, 210, 211, 212, 213, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352]
-
-from get_settings import join_strings, check_if_exists_or_write, SETTINGS
 
 
 class polar_profile:
@@ -224,7 +230,8 @@ class polar_profile:
             plt.plot(sorted_distances, sorted_brightness_values)
             self.show()
             self.saved_figures["plot_polar_" + str(degree)] = fig
-        ret = {"pixel_indices" : pixel_indices, "pixel_distances" : distances, "emission_angles" : emission_angles, "brightness_values" : brightness_values, "meta": {"actual_angle" : degree, "angle_rad" : angle_rad, "starting_x_y_image" : [start_x,start_y], "ending_x_y_image" : [endpoint_x, endpoint_y], "processing" : {"sorted" : False, "filtered" : False, "smoothed" : False, "interpolated" : False} }}
+        ret = {"pixel_indices": pixel_indices, "pixel_distances": distances, "emission_angles": emission_angles, "brightness_values": brightness_values, "meta": {"actual_angle": degree, "angle_rad": angle_rad,
+                                                                                                                                                                  "starting_x_y_image": [start_x, start_y], "ending_x_y_image": [endpoint_x, endpoint_y], "processing": {"sorted": False, "filtered": False, "smoothed": False, "interpolated": False}}}
         return ret
 
     def remove_duplicates(self, x, y):
@@ -249,16 +256,18 @@ class polar_profile:
         band_index: int,
     ):
         self.cube_name = cube.img_id
-        slants = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330]
+        slants = [0, 30, 45, 60, 90, 120, 135, 150,
+                  180, 210, 225, 240, 270, 300, 315, 330]
 
         degrees = self.north_orientation + np.array(slants)
         cmap = matplotlib.cm.get_cmap("rainbow")
         fits = {}
 
-        for index,degree in enumerate(degrees):
-            fits[slants[index]] = self.slanted_cross_section(cube, band, degree)
+        for index, degree in enumerate(degrees):
+            fits[slants[index]] = self.slanted_cross_section(
+                cube, band, degree)
         if self.figures["full_cube_slant"]:
-            for index, (pixel_distance,emission_angles,brightness,pixel_indices,) in enumerate(fits.values()):
+            for index, (pixel_distance, emission_angles, brightness, pixel_indices,) in enumerate(fits.values()):
                 sorted_indices = np.argsort(emission_angles)
                 pairs = list(zip(emission_angles, brightness))
 
@@ -326,27 +335,84 @@ class complete_cube:
         center_of_cube, center_point = objectx.find_center_of_cube(
             cube)
         angles = []
-        brightnesses = cube.lat.flatten()
+        brightnesses = []
         for y in range(cube.lat.shape[0]):
             for x in range(cube.lat.shape[1]):
+                # if cube.ground[y, x] == True:
+                #     continue
+                brightnesses.append(cube.lat[y, x])
                 angles.append(
-                    int(
-                        np.degrees(np.arctan2(
-                            x - center_point[1], center_point[0] - y))
-                    )
-                )
-        actual_angles = sorted(set(angles))
-        br = [
-            np.mean(
-                [brightnesses[index]
-                    for index, a in enumerate(angles) if a == angle]
-            )
-            for angle in actual_angles
-        ]
-        min_angle = actual_angles[np.argmin(br)]
+                    int(np.degrees(np.arctan2(x - center_point[1], center_point[0] - y))))
+        actual_angles = np.array(sorted(set(angles)))
+        br = [np.mean([brightnesses[index]for index, a in enumerate(
+            angles) if a == angle]) for angle in actual_angles]
+        min_angle = []
+        max_angle = []
+
+
+        initial_amplitude = 90  # Since values range from -90 to 90
+        initial_frequency = 1  # One cycle per 360 degrees
+        initial_phase = 0  # Initial phase
+        initial_offset = 0  # Initial offset
+
+        # Adjust bounds as needed
+        param_bounds = ([0, 0, -np.inf, -np.inf], [90, 10, np.inf, np.inf])
+
+        initial_guess = [initial_amplitude,
+            initial_frequency, initial_phase, initial_offset]
+        fitted = False
+        try:
+            # Use curve_fit to fit the triangle wave function to your data
+            params, covariance = curve_fit(
+            triangle_wave, actual_angles, br, p0=initial_guess, bounds=param_bounds)
+            lin_angles = np.linspace(0, 360, 3600)
+            values_from_fit = triangle_wave(lin_angles, *params)
+            sorted_values = np.argsort(values_from_fit)
+            min_angle = lin_angles[sorted_values[0]]
+            max_angle = lin_angles[sorted_values[-1]]
+            fitted = True
+        except:
+            print("failed to fit triangle wave")
+            plt.scatter(angles, brightnesses)
+            plt.scatter(actual_angles, br)
+            plt.scatter(actual_angles, gaussian_filter(br, sigma=3))
+            plt.show()
+            sorted_values = np.argsort(brightnesses)
+            angles = np.array(angles)
+            min_angle =(2 * np.mean(angles[sorted_values[0:4]]) + np.mean(angles[sorted_values[4:8]]))/3
+            max_angle  = (2 * np.mean(angles[sorted_values[-4::]]) + np.mean(angles[sorted_values[-8:-4]]))/3
+
+        # Plot the original data and the fitted sawtooth function
+        # plt.scatter(x_data, y_data, label="Data")
+
+        # # if np.max(brightnesses) > 75 and np.min(brightnesses) < -75:
+        # sorted_values = np.argsort(brightnesses)
+        # angles = np.array(angles)
+        # masked_min = 2*np.mean(angles[sorted_values[0:4]]) + np.mean(angles[sorted_values[4:8]]) ;masked_min /= 3
+        # min_angle.extend(len(brightnesses)*[masked_min])
+        # masked_max = 2*np.mean(angles[sorted_values[-4::]]) + np.mean(angles[sorted_values[-8:-4]]) ;masked_max /= 3
+        # max_angle.extend(len(brightnesses)*[masked_max])
+
+        # angles = []
+        # brightnesses = []
+        # for y in range(cube.lat.shape[0]):
+        #     for x in range(cube.lat.shape[1]):
+        #         if cube.ground[y, x] == False:
+        #             continue
+        #         brightnesses.append(cube.lat[y, x])
+        #         angles.append(
+        #             int(
+        #                 np.degrees(np.arctan2(
+        #                     x - center_point[1], center_point[0] - y))
+        #             )
+        # )
+        # actual_angles = np.array(sorted(set(angles)))
+        # br = [np.mean([brightnesses[index]for index, a in enumerate(angles) if a == angle]) for angle in actual_angles]
+
+        # if np.max(brightnesses) > 75 and np.min(brightnesses) < -75:
+
         if min_angle < 0:
             min_angle += 360
-        max_angle = actual_angles[np.argmax(br)]
         if max_angle < 0:
             max_angle += 360
         calculated_rots = np.array([min_angle, max_angle])
@@ -356,6 +422,28 @@ class complete_cube:
             rot_angle = np.mean([min_angle, max_angle]) + 90
         if rot_angle > 180:
             rot_angle -= 360
+        fig, axs = plt.subplots(1, 3)
+        axs[0].scatter(angles, brightnesses)
+        axs[0].scatter(actual_angles, br)
+        axs[0].scatter(actual_angles, gaussian_filter(br, sigma=3))
+        if fitted:
+            axs[0].plot(actual_angles, triangle_wave(actual_angles, *params),
+                    'r', label="Fitted Triangle Wave")
+        axs[0].legend()
+        axs[1].imshow(cube.lat)
+        try:
+            axs[2].imshow(cube[69])
+            plt.title("Vis")
+        except:
+            axs[2].imshow(cube[118])
+            plt.title("IR")
+        axs[1].plot([center_point[1], center_point[1] + np.sin(np.radians(rot_angle)) * 50],
+                    [center_point[0], center_point[0] - np.cos(np.radians(rot_angle)) * 50], c="r")
+        axs[2].plot([center_point[1], center_point[1] + np.sin(np.radians(rot_angle)) * 50],
+                    [center_point[0], center_point[0] - np.cos(np.radians(rot_angle)) * 50], c="r")
+
+        plt.pause(1)
+        plt.close()
         return rot_angle, distance_array, center_of_cube, center_point
 
     def run_analysis(
@@ -381,7 +469,7 @@ class complete_cube:
 
         print(key, "took", end - start, "seconds.", "expected time left:",
               total_time / percentage - total_time, "seconds", end="\r")
-        print()
+        # print()
         return data, analysis
 
     def analyze_dataset(self, cube_root: str, cube: str = None, force=False):
@@ -422,9 +510,15 @@ class complete_cube:
             if self.starting_band == -1:
                 self.starting_band = int(band)
             data, cube_object = self.run_analysis(self.cube_vis, north_orientation=north_orientation,
-                                                distance_array=distance_array, center_of_cube=center_of_cube, band=band, band_index=band_index, key=key)
+                                                  distance_array=distance_array, center_of_cube=center_of_cube, band=band, band_index=band_index, key=key)
             datas[key] = data
             objects[key] = cube_object
+        (
+            north_orientation,
+            distance_array,
+            center_of_cube,
+            center_point,
+        ) = self.find_north_and_south(self.cube_ir)
         for band in self.cube_ir.bands:
             band_index = int(band) - 97
             # if int(band) in ir_surface_windows:
