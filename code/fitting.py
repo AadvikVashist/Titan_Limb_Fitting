@@ -160,17 +160,43 @@ class fit_data:
         except Exception as e:
             return e, "error occured"
         
+    def remove_outliers(self,x,y):
+        std = np.std(y, axis=0)
+        mean = np.mean(y, axis=0) - np.min(y)
+        diff = np.diff(y, axis=0); diff = np.insert(diff, 0, 0, axis=0)
+        # activated = True
+        # ret_x = x.copy()
+        # ret_y = y.copy()
+        # for index in range(len(y)):
+        #     if index > 1 and index < len(y) - 2:
+        #         three_vals = y[index-1:index+2]
+        #         std_val = np.std(three_vals) 
+        #         if std_val > std:
+                    
+        #             y[index] = np.mean([three_vals[0], three_vals[2]])
+        #             activated = True
+                    
+        if np.max(np.abs(diff)) > 0.5 * mean:
+            plt.plot(x,y)
+            plt.plot(x, diff)
+
+            plt.show()
+            
+        return x, y
         
     def limb_darkening_laws(self, emission_angles, brightness_values, fit_types):
         #get the interpolated data by normalizing the emission angles, and sorting the data
+        # emission_angles, brightness_values = self.remove_outliers(emission_angles, brightness_values)
         emission_angles_to_normalized = self.emission_to_normalized(emission_angles)
         pairs = list(zip(emission_angles_to_normalized, np.array(brightness_values)))
+
 
         sorted_pairs = sorted(pairs, key=lambda x: x[0])
         #the actual interpolation     
         pchip = PchipInterpolator(*zip(*sorted_pairs))
-        range = np.max(emission_angles_to_normalized) - np.min(emission_angles_to_normalized)
-        interp_x = list(np.linspace(np.min(emission_angles_to_normalized), np.min(emission_angles_to_normalized) + 0.15 * range, 50)); interp_x.extend(np.linspace(np.min(emission_angles_to_normalized) + 0.15 * range, np.max(emission_angles_to_normalized) - 0.15 * range, 100)); interp_x.extend(np.linspace(np.max(emission_angles_to_normalized) - 0.15 * range, np.max(emission_angles_to_normalized), 50))
+        range_val = np.max(emission_angles_to_normalized) - np.min(emission_angles_to_normalized)
+        # interp_x = list(np.linspace(np.min(emission_angles_to_normalized), np.min(emission_angles_to_normalized) + 0.15 * range, 50)); interp_x.extend(np.linspace(np.min(emission_angles_to_normalized) + 0.15 * range, np.max(emission_angles_to_normalized) - 0.15 * range, 100)); interp_x.extend(np.linspace(np.max(emission_angles_to_normalized) - 0.15 * range, np.max(emission_angles_to_normalized), 50))
+        interp_x = np.linspace(np.min(emission_angles_to_normalized), np.max(emission_angles_to_normalized), 200)
         interp_y = pchip(interp_x)
         
         #get the smoothed data
@@ -182,6 +208,8 @@ class fit_data:
 
         if fit_types == "all":
             fit_types = ["lin", "quad", "sqrt"]
+            # fit_types = ["quad", "sqrt"]
+
         #fit the data
         elif type(fit_types) == str:
             fit_types = [fit_types]
@@ -241,6 +269,13 @@ class fit_data:
             "moving_average_fit" : {"fit_params": sma_popt, "covariance_matrix": sma_pcov, "r2": sma_r2, "window": window},
             "optimal_fit" : optimal_fit,
             }
+            # if fit_type == "quadratic":
+            #     plt.plot(emission_angles_to_normalized, brightness_values, label="data")
+            #     plt.plot(emission_angles_to_normalized, plot_func(emission_angles_to_normalized, *optimal_fit["fit_params"].values()), label="fit")
+            #     plt.legend()
+            #     # plt.ylim(bottom = 0)
+            #     plt.pause(0.05)
+            #     plt.clf()
         # # fit_fit = self.limb_darkening_function(emission_angles_to_normalized, standard_popt["I_0"], standard_popt["u1"], standard_popt["u2"])
         # gaus_fit = self.limb_darkening_function(emission_angles_to_normalized, gauss_popt["I_0"], gauss_popt["u1"], gauss_popt["u2"])
         # sma_fit = self.limb_darkening_function(emission_angles_to_normalized, sma_popt["I_0"], sma_popt["u1"], sma_popt["u2"])
@@ -277,6 +312,8 @@ class fit_data:
                     data[wave_band][slant]["meta"]["processing"]["fitted"] = False
                 else:
                     data[wave_band][slant]["meta"]["processing"]["fitted"] = True
+                
+
                 data[wave_band][slant]["fit"] = ret_values
 
                 

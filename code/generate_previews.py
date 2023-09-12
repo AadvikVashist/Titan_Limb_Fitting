@@ -105,14 +105,14 @@ class generate_cube_previews:
                     axs[plot_index].set_title("Brightness/Normalized")
                     
                     data_plot = axs[plot_index].plot(normalized_distances, brightness_values, label = "data")
-                    smooth_plot = axs[plot_index].plot(normalized_distances, gaussian_filter(brightness_values, sigma= 3), label = "data with gaussian")
+                    # smooth_plot = axs[plot_index].plot(normalized_distances, gaussian_filter(brightness_values, sigma= 3), label = "data with gaussian")
 
                     axs[plot_index].set_xlabel("Normalized Distance")
                     axs[plot_index].set_ylabel("Brightness Value")
                     if index == 0:
                         handles.extend(data_plot)
                         
-                        handles.extend(smooth_plot)
+                        # handles.extend(smooth_plot)
                     if slant_data["meta"]["processing"]["fitted"] == True:
                         fitted_values = fit_obj.quadratic_limb_darkening(normalized_distances,*list(slant_data["fit"]["quadratic"]["optimal_fit"]["fit_params"].values())) 
                         fit_plot = axs[plot_index].plot(normalized_distances, fitted_values, label = "fit")
