@@ -37,14 +37,14 @@ class generate_cube_previews:
             all_data = check_if_exists_or_write(join_strings(
                 self.fitted_path, SETTINGS["paths"]["cumulative_fitted_path"]), save=False, verbose=True)
         else:
-            cubs = os.listdir(self.data_dir)
+            cubs = os.listdir(self.fitted_path)
             cubs.sort()
             cubs = [cub for cub in cubs if re.fullmatch(
                 r'C.*_.*\.pkl', cub) is not None]
             for cub in cubs:
                 cube_name = os.path.splitext(cub)[0]
                 all_data[cube_name] = check_if_exists_or_write(
-                    join_strings(self.data_dir, cub), save=False, verbose=True)
+                    join_strings(self.fitted_path, cub), save=False, verbose=True)
         return all_data
 
 
@@ -137,7 +137,7 @@ class generate_cube_previews:
                 percentage_completed = (bands_done) / leng
                 total_time_left = time_spent / percentage_completed - time_spent
 
-                print("Finished fitting", wave_band, "| Spent", time_spent, "so far | expected time left:",
+                print("Finished previews for ", wave_band, "| Spent", time_spent, "so far | expected time left:",
                     np.around(total_time_left, 2), "| total time for cube :",  np.around(total_time_left + time_spent,3), end="\r")
             concurrent.futures.wait(futures)
         
