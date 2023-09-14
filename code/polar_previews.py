@@ -388,11 +388,11 @@ class preview_complete_dataset:
     def complete_dataset_preview(self):
         all_data = {}
         force_write = (SETTINGS["processing"]["clear_cache"]
-                       or SETTINGS["processing"]["redo_previews"])
+                       or SETTINGS["processing"]["redo_figures"])
         appended_data = False
         for cub in self.cubes:
             fit_cube = join_strings(
-                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["preview_sub_path"])
+                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["plot_sub_path"])
             if cub + ".pkl" in os.listdir(fit_cube) and not force_write:
                 all_data[cub] = check_if_exists_or_write(
                     cub + ".pkl", base=fit_cube, prefix="", save=False, data=None, verbose=True)
@@ -408,4 +408,4 @@ class preview_complete_dataset:
             all_data[cub] = datas
 
         check_if_exists_or_write(SETTINGS["paths"]["cumulative_preview_path"], base=join_strings(SETTINGS["paths"]["parent_data_path"],
-                                 SETTINGS["paths"]["preview_sub_path"]), save=True, data=all_data, force_write=force_write or appended_data, verbose=True)
+                                 SETTINGS["paths"]["plot_sub_path"]), save=True, data=all_data, force_write=force_write or appended_data, verbose=True)

@@ -1,4 +1,4 @@
-from fitting import fit_data
+from data_processing.fitting import fit_data
 from get_settings import join_strings, check_if_exists_or_write, SETTINGS
 import re
 import os
@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 import pyvims
 
-BANDS_WE_DONT_LIKE = [0, 55, 56, 57, 63, 65, 66, 67, 79, 80, 81, 82, 83, 84, 91, 92, 93, 94, 95, 96, 99, 100, 101, 106, 107, 108, 109, 110, 119, 120, 121, 122, 126, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 147, 163, 164, 165, 166, 167, 168, 169, 170, 171, 175, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 196, 198, 199, 200, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 223, 224, 225, 226, 229, 230, 231, 232, 233, 234, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314, 315, 316, 317, 318, 319, 320, 321, 322, 323, 324, 325, 326, 327, 328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352]
 class plotting_base:
     def __init__(self, devEnvironment: bool = True):
         if devEnvironment == True:
@@ -24,21 +23,6 @@ class plotting_base:
         self.fitted_data_dir = join_strings(
             SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["fitted_sub_path"])
         self.devEnvironment = devEnvironment
-
-    def get_filtered_data(self):
-        all_data = {}
-        if os.path.exists(join_strings(self.filtered_data_dir, SETTINGS["paths"]["cumulative_sorted_path"])):
-            all_data = check_if_exists_or_write(join_strings(
-                self.filtered_data_dir, SETTINGS["paths"]["cumulative_sorted_path"]), save=False, verbose=True)
-        else:
-            cubs = os.listdir(self.filtered_data_dir)
-            cubs = [cub for cub in cubs if re.fullmatch(
-                r'C.*_.*\.pkl', cub) is not None]
-            for cub in cubs:
-                cube_name = os.path.splitext(cub)[0]
-                all_data[cube_name] = check_if_exists_or_write(join_strings(
-                    self.filtered_data_dir, cub), save=False, verbose=True)
-        return all_data
 
     def get_fitted_data(self):
         all_data = {}
