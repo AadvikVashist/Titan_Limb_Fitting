@@ -11,6 +11,7 @@ from scipy.interpolate import PchipInterpolator
 from scipy.ndimage import gaussian_filter
 import pyvims
 from sklearn.metrics import r2_score
+import multiprocessing
 def simple_moving_average(x, N):
     result = []
     window = []
@@ -146,7 +147,7 @@ class fit_data:
             return e, "error occured"
     def run_quadratic_limb_darkening(self, normalized_distances, brightness_values):
         p0 = [1, 0.5, 0.5]
-        param_bounds = [[0, -1, -1], [np.inf, 1, 1]]
+        param_bounds = [[0, -np.inf, -np.inf], [np.inf, np.inf, 1]]
         try:
             popt, pcov = curve_fit(self.quadratic_limb_darkening, normalized_distances, brightness_values,full_output=False, p0=p0, bounds=param_bounds)
             return {"I_0": popt[0], "u1": popt[1], "u2": popt[2]}, pcov
@@ -425,14 +426,26 @@ class fit_data:
         print()
         return data
 
-    def fit_all(self, fit_types: str = "all"):
+    def multi_process_func(self, data, cube_data, index, cube_name):
+        data[cube_name] = self.fit(cube_data, cube_name)
+        check_if_exists_or_write(join_strings(
+            self.save_dir, cube_name + ".pkl"), data=data[cube_name], save=True, force_write=True)
+        time_spent = np.around(time.time() - self.cube_start_time, 3)
+        percentage_completed = (index + 1) / self.cube_count
+        total_time_left = time_spent / percentage_completed - time_spent
+        print("Cube", index + 1,"of", self.cube_count , "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
+                np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")        
+
+    def fit_all(self, fit_types: str = "all", multi_process: bool = False):
         data = self.get_filtered_data()
         force_write = (SETTINGS["processing"]["clear_cache"]
                        or SETTINGS["processing"]["redo_fitting"])
         appended_data = False
-        cube_count = len(data)
+        self.cube_count = len(data)
         self.start_time = time.time()
         self.fit_types = fit_types
+        args = []
+
         for index, (cube_name, cube_data) in enumerate(data.items()):
             if os.path.exists(join_strings(self.save_dir, cube_name + ".pkl")) and not force_write:
                 try:
@@ -446,17 +459,21 @@ class fit_data:
                 appended_data = True
             self.cube_start_time = time.time()
             # only important line in this function
-            data[cube_name] = self.fit(cube_data, cube_name)
+            if multi_process:
+                args.append([data, cube_data, index, cube_name])
+            else:
+                self.multi_process_func(data, cube_data, index, cube_name)
+
 
         # Calculate expected time left based on the average time per cube
-            check_if_exists_or_write(join_strings(
-                self.save_dir, cube_name + ".pkl"), data=data[cube_name], save=True, force_write=True)
+            # check_if_exists_or_write(join_strings(
+            #     self.save_dir, cube_name + ".pkl"), data=data[cube_name], save=True, force_write=True)
             
-            time_spent = np.around(time.time() - self.cube_start_time, 3)
-            percentage_completed = (index + 1) / cube_count
-            total_time_left = time_spent / percentage_completed - time_spent
-            print("Cube", index + 1,"of", cube_count , "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
-                 np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")        
+            # time_spent = np.around(time.time() - self.cube_start_time, 3)
+            # percentage_completed = (index + 1) / self.cube_count
+            # total_time_left = time_spent / percentage_completed - time_spent
+            # print("Cube", index + 1,"of", self.cube_count , "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
+            #      np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")        
         # if os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_sorted_path"])) and appended_data:
         #     print("Since fitted data already exists, but new data has been appended ->")
         #     check_if_exists_or_write(join_strings(
@@ -464,6 +481,9 @@ class fit_data:
         # else:
         #     check_if_exists_or_write(join_strings(
         #         self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data=data, save=True, force_write=True, verbose=True)
+        if multi_process:
+            with multiprocessing.Pool(processes=5) as pool:
+                pool.starmap(self.multi_process_func, args)
         if (os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"])) and appended_data):
             print("Fitted data already exists, but new data has been appended")
             check_if_exists_or_write(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data = data, save=True, force_write=True)
@@ -471,3 +491,20 @@ class fit_data:
             check_if_exists_or_write(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data = data, save=True, force_write=True)
         else:
             print("Fitted not changed since last run. No changes to save...")
+    # def quad_all(self, multi_process: bool = False):
+    #     data = self.get_data()
+    #     self.force_write = (SETTINGS["processing"]["clear_cache"]
+    #                         or SETTINGS["processing"]["redo_figures"])
+    #     self.cube_count = len(data)
+    #     self.start_time = time.time()
+    #     args = []
+    #     for index, (cube_name, cube_data) in enumerate(data.items()):
+    #         self.cube_start_time = time.time()
+    #                     # only important line in this function
+    #         if multi_process:
+    #             args.append([cube_data, index, cube_name])
+    #         else:
+    #             self.gen_cube_quads(cube_data, index, cube_name)
+    #     if multi_process:
+    #         with multiprocessing.Pool(processes=5) as pool:
+    #             pool.starmap(self.gen_cube_quads, args)

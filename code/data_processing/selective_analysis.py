@@ -150,15 +150,15 @@ class select_data:
     def use_inc_to_select_fits(self, wave_band, wave_data, rot_angle):
         x = 0
         if rot_angle <= 180:
-            ret_value = {30: wave_data[30], 150: wave_data[150],
-                         "north_side": wave_data[30], "south_side": wave_data[150]}
-            ret_value["north_side"]["angle"] = 30
-            ret_value["south_side"]["angle"] = 150
+            ret_value = {60: wave_data[60], 120: wave_data[120],
+                         "north_side": wave_data[60], "south_side": wave_data[120]}
+            ret_value["north_side"]["angle"] = 60
+            ret_value["south_side"]["angle"] = 120
         elif rot_angle > 180:
-            ret_value = {330: wave_data[330], 210: wave_data[210],
-                         "north_side": wave_data[330], "south_side": wave_data[210]}
-            ret_value["north_side"]["angle"] = 330
-            ret_value["south_side"]["angle"] = 210
+            ret_value = {300: wave_data[300], 240: wave_data[240],
+                         "north_side": wave_data[300], "south_side": wave_data[240]}
+            ret_value["north_side"]["angle"] = 300
+            ret_value["south_side"]["angle"] = 240
 
         return ret_value
 
@@ -200,10 +200,10 @@ class select_data:
                 try:
                     data[cube_name] = check_if_exists_or_write(
                         join_strings(self.save_dir, cube_name + ".pkl"), save=False)
-                    print("fitted data already exists. Skipping...")
+                    print("selected data already exists. Skipping...")
                     continue
                 except:
-                    print("fitted data corrupted. Processing...")
+                    print("selected data corrupted. Processing...")
             elif not force_write:
                 appended_data = True
             self.cube_start_time = time.time()

@@ -92,7 +92,7 @@ class gen_quad_plots:
             if os.path.exists(join_strings(self.save_dir, cube_name, band_wave + ".png")) and not self.force_write:
                 continue
 
-            fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+            fig, axs = plt.subplots(2, 2, figsize=(12, 12))
             axs = axs.flatten()
             
             #plot the cube and the lat
@@ -163,6 +163,7 @@ class gen_quad_plots:
             axs[3].set_xlabel("Normalized Distance")
             axs[3].set_ylabel("Brightness Value")
             axs[3].set_ylim(y_min,y_max)
+
             axs[3].set_xlim(0,1)
             axs[3].set_yticks(np.arange(y_min,y_max+0.001,0.01))
             axs[3].set_xticks(np.arange(0,1.1,0.1))

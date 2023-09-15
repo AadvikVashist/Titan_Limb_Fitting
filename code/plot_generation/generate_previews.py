@@ -87,21 +87,22 @@ class generate_cube_previews:
             fit_obj = fit_data()
             fig, axs = plt.subplots(6,3, figsize=(16,16))
             axs = axs.flatten()
+            handles = []  # To store legend handles
+
             if plot_index < 96:
                 axs[0].imshow(cube_vis[plot_index], cmap="gray")
                 axs[1].imshow(data["meta"]["cube_vis"]["lat"], cmap="gray")
-                axs[1].plot([data["meta"]["center_of_cube_vis"][1], data["meta"]["center_of_cube_vis"][1] + np.sin(np.radians(data["meta"]["north_orientation_vis"])) * 30],
-                            [data["meta"]["center_of_cube_vis"][0], data["meta"]["center_of_cube_vis"][0] - np.cos(np.radians(data["meta"]["north_orientation_vis"])) * 30], c="r", label="North")
+                handles.extend(axs[1].plot([data["meta"]["center_of_cube_vis"][1], data["meta"]["center_of_cube_vis"][1] + np.sin(np.radians(data["meta"]["north_orientation_vis"])) * 30],
+                            [data["meta"]["center_of_cube_vis"][0], data["meta"]["center_of_cube_vis"][0] - np.cos(np.radians(data["meta"]["north_orientation_vis"])) * 30], c=(0,1,0), label="North"))
             else:
                 axs[0].imshow(cube_ir[plot_index-96], cmap="gray")
                 axs[1].imshow(data["meta"]["cube_ir"]["lat"], cmap="gray")
-                axs[1].plot([data["meta"]["center_of_cube_ir"][1], data["meta"]["center_of_cube_ir"][1] + np.sin(np.radians(data["meta"]["north_orientation_ir"])) * 30],
-                            [data["meta"]["center_of_cube_ir"][0], data["meta"]["center_of_cube_ir"][0] - np.cos(np.radians(data["meta"]["north_orientation_ir"])) * 30], c="r", label="North")
-            axs[1].legend(loc = "upper left")
+                handles.extend(axs[1].plot([data["meta"]["center_of_cube_ir"][1], data["meta"]["center_of_cube_ir"][1] + np.sin(np.radians(data["meta"]["north_orientation_ir"])) * 30],
+                            [data["meta"]["center_of_cube_ir"][0], data["meta"]["center_of_cube_ir"][0] - np.cos(np.radians(data["meta"]["north_orientation_ir"])) * 30], c=(0,1,0), label="North"))
             axs[0].set_title(cube_name + " " + wave_band)
             axs[1].set_title(cube_name + " lat")
-            handles = []  # To store legend handles
-            # y_box =[]
+            y_box =[]
+            
             for index,(slant, slant_data) in enumerate(wave_data.items()):
 
                 plot_index = 2+index
@@ -117,25 +118,26 @@ class generate_cube_previews:
                 
                 axs[plot_index].set_title(str(slant) + "° relative to north")
                 
-                data_plot = axs[plot_index].plot(normalized_distances, brightness_values, label = "data")
+                data_plot = axs[plot_index].plot(normalized_distances, brightness_values, c = (1,0,0),label = "data")
                 # smooth_plot = axs[plot_index].plot(normalized_distances, gaussian_filter(brightness_values, sigma= 3), label = "data with gaussian")
 
                 axs[plot_index].set_xlabel("Normalized Distance")
                 axs[plot_index].set_ylabel("Brightness Value")
                 axs[plot_index].set_xlim(0,1)
-                axs[plot_index].set_xticks(np.arange(0,1.1,0.1), minor=True)
-                
-                # y_box.extend(brightness_values)
+                axs[plot_index].set_xticks(np.arange(0,1.01,0.05), minor=True)
+                axs[plot_index].set_xticks(np.arange(0,1.01,0.1), minor=False)
+
+                y_box.extend(brightness_values)
                 if index == 0:
                     handles.extend(data_plot)
                     
                     # handles.extend(smooth_plot)
                 if slant_data["meta"]["processing"]["fitted"] == True:
                     fitted_values = fit_obj.quadratic_limb_darkening(normalized_distances,*list(slant_data["fit"]["quadratic"]["optimal_fit"]["fit_params"].values())) 
-                    fit_plot = axs[plot_index].plot(normalized_distances, fitted_values, label = "fit")
-                    if len(handles) < 2:
+                    fit_plot = axs[plot_index].plot(normalized_distances, fitted_values, c = (0.3,0.3,0.8), label = "fit")
+                    if len(handles) < 3:
                         handles.extend(fit_plot)
-                        
+                
                 # plt.plot(distances, self.limb_darkening_function(
                     # distances, popt[0], popt[1]))
                 # Smooth data using moving average
@@ -144,19 +146,35 @@ class generate_cube_previews:
             #set y_lim
             # min_box = np.min(y_box); max_box = np.max(y_box); box_range = max_box - min_box
             # min_box -= box_range * 0.1; max_box += box_range * 0.1
-            
+
+            y_range = np.max(y_box) - np.min(y_box)
+            y_min = np.min(y_box) - y_range * 0.1; y_min -= y_min % 0.01
+            y_max = np.max(y_box) + y_range * 0.1; y_max += y_max % 0.01
+
             for index in range(len(wave_data.keys())):
-                plot_index = 2+index   
-                axs[plot_index].set_ylim(0.02,0.08)
+                plot_index = 2+index 
+                axs[plot_index].grid(True, which='both', axis='both', linestyle='--')
+
+                axs[plot_index].set_ylim(y_min,y_max)
+                if y_range < 0.1:
+                    axs[plot_index].set_yticks(np.arange(y_min,y_max+0.001,0.01))
+                    axs[plot_index].set_yticks(np.arange(y_min,y_max+0.001,0.005), minor=True)
+                elif y_range < 0.2:
+                    axs[plot_index].set_yticks(np.arange(y_min,y_max+0.001,0.02))
+                    axs[plot_index].set_yticks(np.arange(y_min,y_max+0.001,0.01), minor=True)
+
+                elif y_range < 0.5:
+                    axs[plot_index].set_yticks(np.arange(y_min,y_max+0.001,0.05))
+                    axs[plot_index].set_yticks(np.arange(y_min,y_max+0.001,0.025))
 
             fig.tight_layout()
             
             
             
-            if len(handles) == 2:
-                fig.legend(handles, ["data", "fit"], loc='upper left')  # Set the legend to the top-left corner
+            if len(handles) == 3:
+                fig.legend(handles, ["North", "Data", "Fit"], loc='upper left', fontsize = 15)  # Set the legend to the top-left corner
             else:
-                fig.legend(handles, ["data"], loc='upper left')  # Set the legend to the top-left corner
+                fig.legend(handles, ["North", "Data"], loc='upper left', fontsize = 15 )  # Set the legend to the top-left corner
             # List to keep track of the futures
             fig.savefig(join_strings(self.save_dir, cube_name, band_wave + ".png"), dpi=150)
             plt.close()
@@ -174,7 +192,7 @@ class generate_cube_previews:
         np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")        
 
     
-    def enumerate_all(self):
+    def enumerate_all(self, multi_process: bool = True):
         data = self.get_fitted_data()
         self.force_write = (SETTINGS["processing"]["clear_cache"]
                        or SETTINGS["processing"]["redo_figures"])
@@ -185,8 +203,12 @@ class generate_cube_previews:
 
             self.cube_start_time = time.time()
             # only important line in this function
-            args.append([cube_data, index, cube_name])
+            if multi_process == False:
+                self.generate_cube_previews(cube_data, index, cube_name)
+            else:
+                args.append([cube_data, index, cube_name])
         # self.generate_cube_previews(cube_data, cube_name)
-        with multiprocessing.Pool(processes=5) as pool:
-            pool.starmap(self.generate_cube_previews, args)
+        if multi_process == True:
+            with multiprocessing.Pool(processes=3) as pool:
+                pool.starmap(self.generate_cube_previews, args)
         # return args, self.generate_cube_previews
