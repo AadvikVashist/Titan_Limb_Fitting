@@ -1,5 +1,5 @@
 import pickle
-from get_settings import join_strings, check_if_exists_or_write, SETTINGS
+from get_settings import join_strings, check_if_exists_or_write, SETTINGS, get_cumulative_filename
 import cv2
 import pyvims
 import json
@@ -219,14 +219,14 @@ class polar_profile:
         mask = np.zeros(self.distance_array.shape)
         cv2.line(
             mask, (int(start_x), int(start_y)), (int(
-                endpoint_x), int(endpoint_y)), 1, 1
-        )
+                endpoint_x), int(endpoint_y)), color = 1, thickness = 1)
         line_indexes = np.where(mask == 1)
         line_indexes = np.array(line_indexes).T
+        band_img =cube[band]
         if self.figures["show_slant"]:
             fig = plt.figure(self.figure_keys["show_slant"])
             plt.scatter(line_indexes[:, 1], line_indexes[:, 0], marker="s")
-            img = cube[band].copy()
+            img = band_img.copy()
             img[line_indexes[:, 0], line_indexes[:, 1]] = 0
             plt.imshow(img)
             self.show()
@@ -236,23 +236,27 @@ class polar_profile:
             distances = np.array(distances)
         except:
             print(line_indexes)
-        brightness_values = [cube[band][x, y] for x, y in line_indexes]
+        brightness_values = [band_img[x, y] for x, y in line_indexes]
         # sort values by distance
-        pairs = list(zip(distances, brightness_values, line_indexes))
-
-        # Sort the pairs based on distances
-        sorted_pairs = sorted(pairs, key=lambda x: x[0])
-
-        # Unpack the sorted pairs into separate arrays
-        sorted_distances, sorted_brightness_values, pixel_indices = zip(
-            *sorted_pairs)
         emission_angles = [cube.eme[x, y] for x, y in line_indexes]
+
+
         if self.figures["plot_polar"]:
+            pairs = list(zip(distances, brightness_values, line_indexes, emission_angles))
+
+            # Sort the pairs based on distances
+            sorted_pairs = sorted(pairs, key=lambda x: x[0])
+
+            # Unpack the sorted pairs into separate arrays
+            sorted_distances, sorted_brightness_values, pixel_indices,emission_angles = zip(
+                *sorted_pairs)
             fig = plt.figure(self.figure_keys["plot_polar"])
             plt.plot(sorted_distances, sorted_brightness_values)
             self.show()
             self.saved_figures["plot_polar_" + str(degree)] = fig
-        ret = {"pixel_indices": pixel_indices, "pixel_distances": distances, "emission_angles": emission_angles, "brightness_values": brightness_values, "meta": {"actual_angle": degree, "angle_rad": angle_rad,
+        
+        
+        ret = {"pixel_indices": line_indexes, "pixel_distances": distances, "emission_angles": emission_angles, "brightness_values": brightness_values, "meta": {"actual_angle": degree, "angle_rad": angle_rad,
                                                                                                                                                                   "starting_x_y_image": [start_x, start_y], "ending_x_y_image": [endpoint_x, endpoint_y], "processing": {"sorted": False, "filtered": False, "smoothed": False, "interpolated": False}}}
         return ret
 
@@ -441,7 +445,7 @@ class complete_cube:
             plt.scatter(angles, brightnesses)
             plt.scatter(actual_angles, br)
             plt.scatter(actual_angles, gaussian_filter(br, sigma=3))
-            plt.show()
+            plt.pause(3)
             sorted_values = np.argsort(brightnesses)
             angles = np.array(angles)
             min_angle = (2 * np.mean(angles[sorted_values[0:4]]) + np.mean(angles[sorted_values[4:8]]))/3
@@ -534,7 +538,7 @@ class complete_cube:
 
         print(key, "took", end - start, "seconds.", "expected time left:",
               total_time / percentage - total_time, "seconds", end="\r")
-        # print()
+        print()
         return data
 
     def analyze_dataset(self, cube_root: str, cube: str = None, force=False):
@@ -628,7 +632,7 @@ class analyze_complete_dataset:
     def complete_dataset_analysis(self):
         all_data = {}
         force_write = (SETTINGS["processing"]["clear_cache"]
-                       or SETTINGS["processing"]["redo_all_flyby_processing_calculations"])
+                       or SETTINGS["processing"]["redo_polar_profile_calculations"])
         appended_data = False
         for cub in self.cubes:
             fit_cube = join_strings(
@@ -646,5 +650,5 @@ class analyze_complete_dataset:
                                      save=True, data=datas, force_write=force_write, verbose=True)
             all_data[cub] = datas
 
-        check_if_exists_or_write(SETTINGS["paths"]["cumulative_data_path"], base=join_strings(SETTINGS["paths"]["parent_data_path"],
+        check_if_exists_or_write(get_cumulative_filename("analysis_sub_path"), base=join_strings(SETTINGS["paths"]["parent_data_path"],
                                  SETTINGS["paths"]["analysis_sub_path"]), save=True, data=all_data, force_write=force_write or appended_data, verbose=True)

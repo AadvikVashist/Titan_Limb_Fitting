@@ -78,7 +78,8 @@ def check_if_exists_or_write(file: str, base: str = None, prefix: str = None, fi
             return data
         else:
             return False
-
+def get_cumulative_filename(path):
+    return SETTINGS["paths"]["cumulative_path"] + SETTINGS["paths"][path] + ".pkl"
 
 SETTINGS = check_if_exists_or_write("settings.json", base =os.path.dirname(os.path.abspath(__file__)), file_type="json", save=False)
 SETTINGS = SETTINGS

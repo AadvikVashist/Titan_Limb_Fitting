@@ -1,0 +1,8 @@
+tar -czvf all.tar.gz ./* 
+scp ./all.tar.gz aadvik@r2d2.barnesos.net:/vims/aadvik_limb_profiles/
+on barnesos.net:
+
+ssh aadvik@r2d2.barnesos.net
+cd /vims/aadvik_limb_profiles/
+tar -xzvf ./improved.tar.gz -C ./
+find . -name '._*' -delete

@@ -1,6 +1,6 @@
 from .polar_profile import analyze_complete_dataset
 from .sort_and_filter import sort_and_filter
-from get_settings import join_strings, check_if_exists_or_write, SETTINGS
+from get_settings import join_strings, check_if_exists_or_write, SETTINGS, get_cumulative_filename
 import re
 import time
 import os
@@ -69,9 +69,9 @@ class select_data:
 
     def get_fitted_data(self):
         all_data = {}
-        if os.path.exists(join_strings(self.data_dir, SETTINGS["paths"]["cumulative_fitted_path"])):
+        if os.path.exists(join_strings(self.data_dir, get_cumulative_filename("fitted_sub_path"))):
             all_data = check_if_exists_or_write(join_strings(
-                self.data_dir, SETTINGS["paths"]["cumulative_fitted_path"]), save=False, verbose=True)
+                self.data_dir, get_cumulative_filename("fitted_sub_path")), save=False, verbose=True)
         else:
             cubs = os.listdir(self.data_dir)
             cubs = [cub for cub in cubs if re.fullmatch(
@@ -187,6 +187,19 @@ class select_data:
         print()
         return data
 
+    def check_stats(self):
+        data = self.get_fitted_data()
+        count = 0
+        total = 0
+        for cube, cube_data in data.items():
+            for wave_band, wave_data in cube_data.items():
+                if "µm_" not in wave_band:
+                    continue
+                for slant, slant_data in wave_data.items():
+                    total += 1
+                    if slant_data["meta"]["processing"]["fitted"]:
+                        count+=1
+        print(count, total, count/total)
     def run_selection_on_all(self, fit_types: str = "all"):
         data = self.get_fitted_data()
         force_write = (SETTINGS["processing"]["clear_cache"]
@@ -219,19 +232,12 @@ class select_data:
             total_time_left = time_spent / percentage_completed - time_spent
             print("Cube", index + 1, "of", cube_count, "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
                   np.around(total_time_left, 2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")
-        # if os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_sorted_path"])) and appended_data:
-        #     print("Since fitted data already exists, but new data has been appended ->")
-        #     check_if_exists_or_write(join_strings(
-        #         self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data=data, save=True, force_write=True, verbose=True)
-        # else:
-        #     check_if_exists_or_write(join_strings(
-        #         self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data=data, save=True, force_write=True, verbose=True)
-        if (os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_selected_path"])) and appended_data):
+        if (os.path.exists(join_strings(self.save_dir, get_cumulative_filename("selected_sub_path"))) and appended_data):
             print("Fitted data already exists, but new data has been appended")
             check_if_exists_or_write(join_strings(
-                self.save_dir, SETTINGS["paths"]["cumulative_selected_path"]), data=data, save=True, force_write=True)
+                self.save_dir, get_cumulative_filename("selected_sub_path")), data=data, save=True, force_write=True)
         elif force_write:
             check_if_exists_or_write(join_strings(
-                self.save_dir, SETTINGS["paths"]["cumulative_selected_path"]), data=data, save=True, force_write=True)
+                self.save_dir, get_cumulative_filename("selected_sub_path")), data=data, save=True, force_write=True)
         else:
             print("Fitted not changed since last run. No changes to save...")

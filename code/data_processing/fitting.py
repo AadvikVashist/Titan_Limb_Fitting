@@ -1,6 +1,6 @@
 from .polar_profile import analyze_complete_dataset
 from .sort_and_filter import sort_and_filter
-from get_settings import join_strings, check_if_exists_or_write, SETTINGS
+from get_settings import join_strings, check_if_exists_or_write, SETTINGS, get_cumulative_filename
 import re
 import time
 import os
@@ -34,8 +34,7 @@ class fit_data:
         self.save_dir = join_strings(
             SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["fitted_sub_path"])
         self.data_dir = join_strings(
-            SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["sorted_sub_path"])
-
+            SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["nsa_filtered_out_sub_path"])
 
 
     def emission_to_normalized(self, emission_angle):
@@ -87,9 +86,9 @@ class fit_data:
 
     def get_filtered_data(self):
         all_data = {}
-        if os.path.exists(join_strings(self.data_dir, SETTINGS["paths"]["cumulative_sorted_path"])):
+        if os.path.exists(join_strings(self.data_dir,get_cumulative_filename("nsa_filtered_out_sub_path"))):
             all_data = check_if_exists_or_write(join_strings(
-                self.data_dir, SETTINGS["paths"]["cumulative_sorted_path"]), save=False, verbose=True)
+                self.data_dir,get_cumulative_filename("nsa_filtered_out_sub_path")), save=False, verbose=True)
         else:
             cubs = os.listdir(self.data_dir)
             cubs = [cub for cub in cubs if re.fullmatch(
@@ -142,12 +141,13 @@ class fit_data:
         try:
             popt, pcov = curve_fit(self.linear_limb_darkening, normalized_distances, brightness_values,
                                     full_output=False, p0=p0)
+
             return {"I_0": popt[0], "u": popt[1]}, pcov
         except Exception as e:
             return e, "error occured"
     def run_quadratic_limb_darkening(self, normalized_distances, brightness_values):
         p0 = [1, 0.5, 0.5]
-        param_bounds = [[0, -np.inf, -np.inf], [np.inf, np.inf, 1]]
+        param_bounds = [[0, -np.inf, -np.inf], [np.inf, np.inf, np.inf]]
         try:
             popt, pcov = curve_fit(self.quadratic_limb_darkening, normalized_distances, brightness_values,full_output=False, p0=p0, bounds=param_bounds)
             return {"I_0": popt[0], "u1": popt[1], "u2": popt[2]}, pcov
@@ -157,6 +157,7 @@ class fit_data:
         p0 = [1, 0.5, 0.5]
         try:
             popt,pcov = curve_fit(self.square_root_limb_darkening, normalized_distances, brightness_values,full_output=False, p0=p0)
+
             return {"I_0": popt[0], "u1": popt[1], "u2": popt[2]}, pcov
         except Exception as e:
             return e, "error occured"
@@ -200,6 +201,7 @@ class fit_data:
         interp_x = np.linspace(np.min(emission_angles_to_normalized), np.max(emission_angles_to_normalized), 200)
         interp_y = pchip(interp_x)
         
+
         #get the smoothed data
         sigma = 20
         window = 20
@@ -235,221 +237,154 @@ class fit_data:
             sma_popt, sma_pcov = run_func(interp_x, sma)
             if type(standard_pcov) == str:
                 fit_fit = None
-                fit_r2 = 0
+                fit_r2 = np.nan
+                standard_popt = None
+                standard_pcov = None
             else:
                 fit_fit = plot_func(emission_angles_to_normalized, *standard_popt.values())
                 fit_r2 = r2_score(brightness_values, fit_fit)
             if type(gauss_pcov) == str:
                 gauss_fit = None
-                gauss_r2 = 0
+                gauss_r2 = np.nan
+                gauss_popt = None
+                gauss_pcov = None
             else:
                 gauss_fit = plot_func(emission_angles_to_normalized, *gauss_popt.values())
                 gauss_r2 = r2_score(brightness_values, gauss_fit)
             
             if type(sma_pcov) == str:
                 sma_fit = None
-                sma_r2 = 0
+                sma_r2 = np.nan
+                sma_popt = None
+                sma_pcov = None
             else:
                 sma_fit = plot_func(emission_angles_to_normalized, *sma_popt.values())
                 sma_r2 = r2_score(brightness_values, sma_fit)
 
-            
-            
-            if gauss_r2 > fit_r2 and gauss_r2 > sma_r2:
-                optimal_fit = {"fit_params": gauss_popt, "covariance_matrix": gauss_pcov, "r2": gauss_r2, "type": "gaussian", "sigma": sigma}
-            elif sma_r2 > fit_r2 and sma_r2 > gauss_r2:
-                optimal_fit = {"fit_params": sma_popt, "covariance_matrix": sma_pcov, "r2": sma_r2, "type": "moving average", "window": window}
-            else:
-                optimal_fit = {"fit_params": standard_popt, "covariance_matrix": standard_pcov, "r2": fit_r2, "type": "standard"}
-            if all([gauss_r2 == 0, sma_r2 == 0, fit_r2 == 0]):
-                optimal_fit = []
+
             return_value[fit_type] = {
             "standard_fit" : {"fit_params": standard_popt, "covariance_matrix": standard_pcov, "r2": fit_r2},
             "gaussian_fit" : {"fit_params": gauss_popt, "covariance_matrix": gauss_pcov, "r2": gauss_r2, "sigma": sigma},
             "moving_average_fit" : {"fit_params": sma_popt, "covariance_matrix": sma_pcov, "r2": sma_r2, "window": window},
-            "optimal_fit" : optimal_fit,
             }
-            # if fit_type == "quadratic":
-            #     plt.plot(emission_angles_to_normalized, brightness_values, label="data")
-            #     plt.plot(emission_angles_to_normalized, plot_func(emission_angles_to_normalized, *optimal_fit["fit_params"].values()), label="fit")
-            #     plt.legend()
-            #     # plt.ylim(bottom = 0)
-            #     plt.pause(0.05)
-            #     plt.clf()
-        # # fit_fit = self.limb_darkening_function(emission_angles_to_normalized, standard_popt["I_0"], standard_popt["u1"], standard_popt["u2"])
-        # gaus_fit = self.limb_darkening_function(emission_angles_to_normalized, gauss_popt["I_0"], gauss_popt["u1"], gauss_popt["u2"])
-        # sma_fit = self.limb_darkening_function(emission_angles_to_normalized, sma_popt["I_0"], sma_popt["u1"], sma_popt["u2"])
-        
-        # # plt.plot(emission_angles_to_normalized, brightness_values, label="data")
-        # # plt.plot(emission_angles_to_normalized, fit_fit, label="fit")
-        # # plt.plot(emission_angles_to_normalized, gaus_fit, label="gaus")
-        # # plt.plot(emission_angles_to_normalized, sma_fit, label="sma")
-        # # plt.legend()
-        # # plt.ylim(bottom = 0)
-        # # plt.show()
-        # gauss_r2 = r2_score(brightness_values, gaus_fit)
-        # sma_r2 = r2_score(brightness_values, sma_fit)
-        
-        # if gauss_r2 > fit_r2 and gauss_r2 > sma_r2:
-        #     optimal_popt, optimal_pcov = gauss_popt, gauss_pcov
-        # elif sma_r2 > fit_r2 and sma_r2 > gauss_r2:
-        #     optimal_popt, optimal_pcov = sma_popt, sma_pcov
-        # else:
-        #     optimal_popt, optimal_pcov = standard_popt, standard_pcov
+            list_of_r2 = [fit_r2, gauss_r2, sma_r2]
+            if np.isnan(list_of_r2).all():
+                optimal_selection = 0
+                return_value[fit_type]["optimal_fit"] = {}  
+                continue
+            else:
+                optimal_selection = np.nanargmax(list_of_r2)
+
+            if type(optimal_selection) != np.int64:
+                optimal_selection = 0
+            if optimal_selection == 0:
+                optimal_selection = "fit_r2"
+            elif optimal_selection == 1:
+                optimal_selection = "gauss_r2"
+            elif optimal_selection == 2:
+                optimal_selection = "sma_r2"
+            
+            if "gauss_r2" in optimal_selection:
+                return_value[fit_type]["optimal_fit"] = return_value[fit_type]["gaussian_fit"]            
+            elif "sma_r2" in optimal_selection:
+                return_value[fit_type]["optimal_fit"] = return_value[fit_type]["moving_average_fit"]            
+            else:
+                return_value[fit_type]["optimal_fit"] = return_value[fit_type]["standard_fit"]            
+            if type(return_value[fit_type]["optimal_fit"]) is dict and return_value[fit_type]["optimal_fit"]["fit_params"] is None:
+                x = 0
         return return_value
 
     def fit(self, data: dict, cube_name: str = None):
         leng = len(data.keys())
         cube_vis = pyvims.VIMS(cube_name + "_vis.cub", join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["cube_sub_path"],cube_name), channel="vis")
         cube_ir = pyvims.VIMS(cube_name + "_ir.cub",  join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["cube_sub_path"],cube_name), channel="ir")
+        ind_shift = 0
         for index, (wave_band, wave_data) in enumerate(data.items()):
-            bad = False
             if "µm_" not in wave_band:
+                ind_shift+=1
                 continue
+            if index >= 96+ind_shift:
+                image = data["meta"]["cube_ir"]["bands"][index-ind_shift-96]
+            else:
+                image = data["meta"]["cube_vis"]["bands"][index-ind_shift]
+
             for slant, slant_data in wave_data.items():
                 emission_angles = np.array(slant_data["emission_angles"])
                 brightness_values = np.array(slant_data["brightness_values"])
-                ret_values = self.limb_darkening_laws(emission_angles, brightness_values, self.fit_types)
-                if all([len(ret_value["optimal_fit"]) == 0 for ret_value in ret_values.values()]):
+                slant_b = np.array([image[pixel_index[0], pixel_index[1]] for pixel_index in data[wave_band][slant]["pixel_indices"]])
+                if not np.all(slant_b == brightness_values):
+                    raise ValueError("Brightness values not equal")
+
+                if len(emission_angles) == 0:
                     data[wave_band][slant]["meta"]["processing"]["fitted"] = False
+                    continue                
+                ret_values = self.limb_darkening_laws(emission_angles, brightness_values, self.fit_types)
+                data[wave_band][slant]["fit"] = ret_values
+                if ret_values["quadratic"]["optimal_fit"] == {}:
+                    #try to redo same thing with old vals
+                    data[wave_band][slant]["meta"]["processing"]["fitted"] = None
+                    old_eme_angles = np.array(slant_data["filtered"]["emission_angles"])
+                    old_b_values = np.array(slant_data["filtered"]["brightness_values"])
+                    unfiltered_ret = self.limb_darkening_laws(old_eme_angles, old_b_values, self.fit_types)
+                    data[wave_band][slant]["filtered"]["fit"] = unfiltered_ret
+                    if unfiltered_ret["quadratic"]["optimal_fit"] == {}:
+                        data[wave_band][slant]["filtered"]["meta"]["processing"]["fitted"] = None
+                    else:
+                        data[wave_band][slant]["filtered"]["meta"]["processing"]["fitted"] = True
+
                 else:
                     data[wave_band][slant]["meta"]["processing"]["fitted"] = True
-                
-
-                data[wave_band][slant]["fit"] = ret_values
 
                 
-                
-                # fig, axs = plt.subplots(1,4, figsize= (15,5))
-                # plt.title(cube_name + "  " + wave_band + " " + str(slant))
-                # # axs[0].plot(interp_x, interp_y)
-                # axs[0].plot(self.emission_to_normalized(emission_angle=emission_angles), brightness_values, label="data")
-                # axs[0].plot(self.emission_to_normalized(emission_angle=emission_angles), self.limb_darkening_function(
-                #     self.emission_to_normalized(emission_angle=emission_angles), popt["I_0"],  popt["u1"], popt["u2"]), label="fit")
-                
-                
-                # axs[1].plot(self.emission_to_normalized(emission_angle=emission_angles), brightness_values, label="data")
-                # axs[1].plot(self.emission_to_normalized(emission_angle=interp_x), gaus, label="gaus")
 
-                # axs[1].plot(self.emission_to_normalized(emission_angle=interp_x), self.limb_darkening_function(
-                #     self.emission_to_normalized(emission_angle=interp_x), popt["I_0"],  popt["u1"], popt["u2"]), label="fit_gaus")
-                
-                # axs[2].plot(self.emission_to_normalized(emission_angle=emission_angles), brightness_values, label="data")
-                # axs[2].plot(self.emission_to_normalized(emission_angle=interp_x), sma, label="sma")
-
-                # axs[2].plot(self.emission_to_normalized(emission_angle=interp_x), self.limb_darkening_function(
-                #     self.emission_to_normalized(emission_angle=interp_x), popt["I_0"],  popt["u1"], popt["u2"]), label="fit_sma")
-                
-                
-                # if index < 96:
-                #     axs[3].imshow(cube_vis[index+1])
-                # else:
-                #     axs[3].imshow(cube_ir[index+1])
-                # axs[0].legend()
-                # axs[1].legend()
-                # axs[2].legend()
-                # axs[0].set_ylim(bottom = 0)
-                # axs[1].set_ylim(bottom = 0)
-                # axs[2].set_ylim(bottom = 0)
-                # plt.show()
-                
-                # if type(standard_pcov) == str and standard_pcov == "error occured":
-                #     # distances = popt
-                #     # fig, axs = plt.subplots(1,2)
-                #     # plt.title(cube_name + "  " + wave_band + " " + str(slant))
-                #     # axs[0].plot(distances, interp_y)
-                #     # if index < 96:
-                #     #     axs[1].imshow(cube_vis[index+1])
-                #     # else:
-                #     #     axs[1].imshow(cube_ir[index+1])
-                #     # plt.plot(distances, self.limb_darkening_function(
-                #     #     distances, popt[0], popt[1]))
-                #     # # Smooth data using moving average
-                    
-                #     # plt.show()
-                #     data[wave_band][slant]["meta"]["processing"]["fitted"] = None
-                #     data[wave_band][slant]["fit"] = {}
-                #     bad = False 
-
-                # else:
-                    # x = 0
-                    # standard_popt, standard_pcov = self.limb_darkening_law(interp_x, interp_y)
-
-                    # popt_gaus, pcov_gaus = self.limb_darkening_law(interp_x, gaus)
-                    # popt_sma, pcov_sma = self.limb_darkening_law(interp_x, sma)
-                    
-                    # gaus = gaussian_filter(interp_y, sigma=20)
-                    # window_size = 20
-                    # sma = simple_moving_average(interp_y, window_size)
-                    # emission_angles_to_normalized = self.emission_to_normalized(emission_angles)
-                    # fit_fit = self.limb_darkening_function(emission_angles_to_normalized, standard_popt["I_0"], standard_popt["u1"], standard_popt["u2"])
-                    # gaus_fit = self.limb_darkening_function(emission_angles_to_normalized, popt_gaus["I_0"], popt_gaus["u1"], popt_gaus["u2"])
-                    # sma_fit = self.limb_darkening_function(emission_angles_to_normalized, popt_sma["I_0"], popt_sma["u1"], popt_sma["u2"])
-                    
-                    # # plt.plot(emission_angles_to_normalized, brightness_values, label="data")
-                    # # plt.plot(emission_angles_to_normalized, fit_fit, label="fit")
-                    # # plt.plot(emission_angles_to_normalized, gaus_fit, label="gaus")
-                    # # plt.plot(emission_angles_to_normalized, sma_fit, label="sma")
-                    # # plt.legend()
-                    # # plt.ylim(bottom = 0)
-                    # # plt.show()
-                    # fit_r2 = r2_score(brightness_values, fit_fit)
-                    # gauss_r2 = r2_score(brightness_values, gaus_fit)
-                    # sma_r2 = r2_score(brightness_values, sma_fit)
-                    
-                    # if gauss_r2 > fit_r2 and gauss_r2 > sma_r2:
-                    #     optimal_popt, optimal_pcov = popt_gaus, pcov_gaus
-                    # elif sma_r2 > fit_r2 and sma_r2 > gauss_r2:
-                    #     optimal_popt, optimal_pcov = popt_sma, pcov_sma
-                    # else:
-                    #     optimal_popt, optimal_pcov = standard_popt, standard_pcov
-
-                    # data[wave_band][slant]["meta"]["processing"]["fitted"] = True
-                    # data[wave_band][slant]["fit"] = {
-                        
-                    # "optimal_fit" : {"fit_params": optimal_popt, "covariance_matrix": optimal_pcov, "limb_darkening_function": self.limb_darkening_function_name},
-                    # "standard_fit" : {"fit_params": optimal_popt, "covariance_matrix": optimal_pcov, "limb_darkening_function": self.limb_darkening_function_name},
-                    # "gaussian_fit" : {"fit_params": optimal_popt, "covariance_matrix": optimal_pcov, "limb_darkening_function": self.limb_darkening_function_name},
-                    # "moving_average_fit" : {"fit_params": optimal_popt, "covariance_matrix": optimal_pcov, "limb_darkening_function": self.limb_darkening_function_name},
-
-                    # }
-                # data[wave_band][slant]["pixel_indices"], data[wave_band][slant]["pixel_distances"], data[wave_band][slant]["emission_angles"], data[wave_band][slant]["brightness_values"]
-            for slant, slant_data in wave_data.items():
-                if bad:
-                    data[wave_band][slant]["meta"]["processing"]["fitted"] = None
             time_spent = np.around(time.time() - self.cube_start_time, 3)
             percentage_completed = (index + 1) / leng
             total_time_left = time_spent / percentage_completed - time_spent
 
             print("Finished fitting", wave_band, "| Spent", time_spent, " so far | expected time left:",
-                np.around(total_time_left, 2), "| total time for cube :",  np.around(total_time_left + time_spent, 3), end="\r")
+                np.around(total_time_left, 2), "| total time for cube :",  np.around(total_time_left + time_spent, 1), "                                ", end="\r")
         print()
         return data
 
-    def multi_process_func(self, data, cube_data, index, cube_name):
-        data[cube_name] = self.fit(cube_data, cube_name)
-        check_if_exists_or_write(join_strings(
-            self.save_dir, cube_name + ".pkl"), data=data[cube_name], save=True, force_write=True)
+    def multi_process_func(self, cube_data, index, cube_name):
+        self.ret_data[cube_name] = self.fit(cube_data, cube_name)
+        check_if_exists_or_write(join_strings(self.save_dir, cube_name + ".pkl"), data=self.ret_data[cube_name], save=True, force_write=True)
         time_spent = np.around(time.time() - self.cube_start_time, 3)
         percentage_completed = (index + 1) / self.cube_count
         total_time_left = time_spent / percentage_completed - time_spent
-        print("Cube", index + 1,"of", self.cube_count , "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
-                np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")        
+        print("Cube", index + 1,"of", self.cube_count , "| Total time for cube:", np.around(time_spent, 1), "seconds | Total Expected time left:",
+                np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time,1), "seconds"                       )        
 
-    def fit_all(self, fit_types: str = "all", multi_process: bool = False):
-        data = self.get_filtered_data()
+    def save_cumulative(self, force_write: bool = False, appended_data: bool = True):
+        # for cube in os.listdir(self.save_dir):
+        #     match = re.fullmatch(r'C.*_.*\.pkl', cube) 
+        #     if match is None:
+        #         continue
+        #     self.cum_data[cube[0:-4]] = check_if_exists_or_write(join_strings(self.save_dir, cube), save=False)
+        if (os.path.exists(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path"))) and appended_data):
+            print("Fitted data already exists, but new data has been appended")
+            check_if_exists_or_write(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path")), data = self.ret_data, save=True, force_write=True)
+        elif force_write:
+            check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("fitted_sub_path")), data = self.ret_data, save=True, force_write=True)
+        else:
+            print("Fitted not changed since last run. No changes to save...")    
+    def fit_some(self, start: int = 0, step: int = 3, fit_types: str = "all", multi_process: bool = False):
+        self.data = self.get_filtered_data()
         force_write = (SETTINGS["processing"]["clear_cache"]
                        or SETTINGS["processing"]["redo_fitting"])
-        appended_data = False
-        self.cube_count = len(data)
+        appended_data = True
+        self.cube_count = len(self.data)
         self.start_time = time.time()
         self.fit_types = fit_types
         args = []
-
-        for index, (cube_name, cube_data) in enumerate(data.items()):
+        self.ret_data = {}
+        for index, (cube_name, cube_data) in enumerate(self.data.items()):
+            if index % step != start:
+                print("skipping because not in step->", cube_name)
+                continue
             if os.path.exists(join_strings(self.save_dir, cube_name + ".pkl")) and not force_write:
                 try:
-                    data[cube_name] = check_if_exists_or_write(
+                    self.ret_data[cube_name] = check_if_exists_or_write(
                         join_strings(self.save_dir, cube_name + ".pkl"), save=False)
                     print("fitted data already exists. Skipping...")
                     continue
@@ -460,51 +395,43 @@ class fit_data:
             self.cube_start_time = time.time()
             # only important line in this function
             if multi_process:
-                args.append([data, cube_data, index, cube_name])
+                args.append([cube_data, index, cube_name])
             else:
-                self.multi_process_func(data, cube_data, index, cube_name)
-
-
-        # Calculate expected time left based on the average time per cube
-            # check_if_exists_or_write(join_strings(
-            #     self.save_dir, cube_name + ".pkl"), data=data[cube_name], save=True, force_write=True)
-            
-            # time_spent = np.around(time.time() - self.cube_start_time, 3)
-            # percentage_completed = (index + 1) / self.cube_count
-            # total_time_left = time_spent / percentage_completed - time_spent
-            # print("Cube", index + 1,"of", self.cube_count , "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
-            #      np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")        
-        # if os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_sorted_path"])) and appended_data:
-        #     print("Since fitted data already exists, but new data has been appended ->")
-        #     check_if_exists_or_write(join_strings(
-        #         self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data=data, save=True, force_write=True, verbose=True)
-        # else:
-        #     check_if_exists_or_write(join_strings(
-        #         self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data=data, save=True, force_write=True, verbose=True)
+                self.multi_process_func(cube_data, index, cube_name)
         if multi_process:
             with multiprocessing.Pool(processes=5) as pool:
                 pool.starmap(self.multi_process_func, args)
-        if (os.path.exists(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"])) and appended_data):
-            print("Fitted data already exists, but new data has been appended")
-            check_if_exists_or_write(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data = data, save=True, force_write=True)
-        elif force_write:
-            check_if_exists_or_write(join_strings(self.save_dir, SETTINGS["paths"]["cumulative_fitted_path"]), data = data, save=True, force_write=True)
-        else:
-            print("Fitted not changed since last run. No changes to save...")
-    # def quad_all(self, multi_process: bool = False):
-    #     data = self.get_data()
-    #     self.force_write = (SETTINGS["processing"]["clear_cache"]
-    #                         or SETTINGS["processing"]["redo_figures"])
-    #     self.cube_count = len(data)
-    #     self.start_time = time.time()
-    #     args = []
-    #     for index, (cube_name, cube_data) in enumerate(data.items()):
-    #         self.cube_start_time = time.time()
-    #                     # only important line in this function
-    #         if multi_process:
-    #             args.append([cube_data, index, cube_name])
-    #         else:
-    #             self.gen_cube_quads(cube_data, index, cube_name)
-    #     if multi_process:
-    #         with multiprocessing.Pool(processes=5) as pool:
-    #             pool.starmap(self.gen_cube_quads, args)
+        self.save_cumulative(force_write=force_write, appended_data=appended_data )
+            
+    def fit_all(self, fit_types: str = "all", multi_process: bool = False):
+        self.data = self.get_filtered_data()
+        force_write = (SETTINGS["processing"]["clear_cache"]
+                       or SETTINGS["processing"]["redo_fitting"])
+        appended_data = True
+        self.cube_count = len(self.data)
+        self.start_time = time.time()
+        self.fit_types = fit_types
+        args = []
+        self.ret_data = {}
+        for index, (cube_name, cube_data) in enumerate(self.data.items()):
+            if os.path.exists(join_strings(self.save_dir, cube_name + ".pkl")) and not force_write:
+                try:
+                    self.ret_data[cube_name] = check_if_exists_or_write(
+                        join_strings(self.save_dir, cube_name + ".pkl"), save=False)
+                    print("fitted data already exists. Skipping...")
+                    continue
+                except:
+                    print("fitted data corrupted. Processing...")
+            elif not force_write:
+                appended_data = True
+            self.cube_start_time = time.time()
+            # only important line in this function
+            if multi_process:
+                args.append([cube_data, index, cube_name])
+            else:
+                self.multi_process_func(cube_data, index, cube_name)
+
+        if multi_process:
+            with multiprocessing.Pool(processes=5) as pool:
+                pool.starmap(self.multi_process_func, args)
+        self.save_cumulative(force_write=force_write, appended_data=appended_data )

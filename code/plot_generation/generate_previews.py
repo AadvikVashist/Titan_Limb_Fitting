@@ -1,6 +1,6 @@
 from data_processing.polar_profile import analyze_complete_dataset
 from data_processing.sort_and_filter import sort_and_filter
-from get_settings import join_strings, check_if_exists_or_write, SETTINGS
+from get_settings import join_strings, check_if_exists_or_write, SETTINGS, get_cumulative_filename
 import re
 import time
 import os
@@ -19,10 +19,10 @@ class generate_cube_previews:
     def __init__(self, devEnvironment: bool = True):
         if devEnvironment == True:
             self.save_dir = join_strings(
-                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["dev_figures_sub_path"],  SETTINGS["paths"]["figure_full_preview_subpath"])
+                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["dev_figures_sub_path"],  SETTINGS["paths"]["figure_subpath"]["preview"])
         else:
             self.save_dir = join_strings(
-                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["prod_figures_sub_path"],  SETTINGS["paths"]["figure_full_preview_subpath"])
+                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["prod_figures_sub_path"],  SETTINGS["paths"]["figure_subpath"]["preview"])
         self.devEnvironment = devEnvironment
         # self.save_dir = join_strings(
         #     SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["plot_sub_path"])
@@ -35,9 +35,9 @@ class generate_cube_previews:
 
     def get_fitted_data(self):
         all_data = {}
-        if os.path.exists(join_strings(self.fitted_path, SETTINGS["paths"]["cumulative_fitted_path"])):
+        if os.path.exists(join_strings(self.fitted_path,get_cumulative_filename("fitted_sub_path"))):
             all_data = check_if_exists_or_write(join_strings(
-                self.fitted_path, SETTINGS["paths"]["cumulative_fitted_path"]), save=False, verbose=True)
+                self.fitted_path, get_cumulative_filename("fitted_sub_path")), save=False, verbose=True)
         else:
             cubs = os.listdir(self.fitted_path)
             cubs.sort()
@@ -72,7 +72,7 @@ class generate_cube_previews:
         futures = []
         mpl.rcParams['path.simplify_threshold'] = 1.0
         mpl.style.use('fast')
-
+        plt.rcParams['font.family'] = 'serif'
         for plot_index, (wave_band, wave_data) in enumerate(data.items()):
             if "µm_" not in wave_band:
                 continue
@@ -132,7 +132,7 @@ class generate_cube_previews:
                     handles.extend(data_plot)
                     
                     # handles.extend(smooth_plot)
-                if slant_data["meta"]["processing"]["fitted"] == True:
+                if slant_data["meta"]["processing"]["fitted"] == True and len(slant_data["fit"]["quadratic"]["optimal_fit"]) > 0 and slant_data["fit"]["quadratic"]["optimal_fit"]["fit_params"] is not None:
                     fitted_values = fit_obj.quadratic_limb_darkening(normalized_distances,*list(slant_data["fit"]["quadratic"]["optimal_fit"]["fit_params"].values())) 
                     fit_plot = axs[plot_index].plot(normalized_distances, fitted_values, c = (0.3,0.3,0.8), label = "fit")
                     if len(handles) < 3:
@@ -195,7 +195,7 @@ class generate_cube_previews:
     def enumerate_all(self, multi_process: bool = True):
         data = self.get_fitted_data()
         self.force_write = (SETTINGS["processing"]["clear_cache"]
-                       or SETTINGS["processing"]["redo_figures"])
+                       or SETTINGS["processing"]["redo_preview_figures_generation"])
         self.cube_count = len(data)
         self.start_time = time.time()
         args = []
@@ -209,6 +209,6 @@ class generate_cube_previews:
                 args.append([cube_data, index, cube_name])
         # self.generate_cube_previews(cube_data, cube_name)
         if multi_process == True:
-            with multiprocessing.Pool(processes=3) as pool:
+            with multiprocessing.Pool(processes=5) as pool:
                 pool.starmap(self.generate_cube_previews, args)
         # return args, self.generate_cube_previews

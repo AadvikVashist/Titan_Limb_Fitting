@@ -1,6 +1,6 @@
 from data_processing.polar_profile import analyze_complete_dataset
 from data_processing.sort_and_filter import sort_and_filter
-from get_settings import join_strings, check_if_exists_or_write, SETTINGS
+from get_settings import join_strings, check_if_exists_or_write, SETTINGS, get_cumulative_filename
 import re
 import time
 import os
@@ -21,10 +21,10 @@ class gen_quad_plots:
     def __init__(self, devEnvironment: bool = True):
         if devEnvironment == True:
             self.save_dir = join_strings(
-                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["dev_figures_sub_path"],  SETTINGS["paths"]["quad_figure_subpath"])
+                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["dev_figures_sub_path"],  SETTINGS["paths"]["figure_subpath"]["quadrant"])
         else:
             self.save_dir = join_strings(
-                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["prod_figures_sub_path"],  SETTINGS["paths"]["quad_figure_subpath"])
+                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["prod_figures_sub_path"],  SETTINGS["paths"]["figure_subpath"]["quadrant"])
         self.devEnvironment = devEnvironment
         # self.save_dir = join_strings(
         #     SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["plot_sub_path"])
@@ -38,9 +38,9 @@ class gen_quad_plots:
 
     def get_data(self):
         all_data = {}
-        if os.path.exists(join_strings(self.selective_fitted_path, SETTINGS["paths"]["cumulative_selected_path"])):
+        if os.path.exists(join_strings(self.selective_fitted_path, get_cumulative_filename("selected_sub_path"))):
             all_data = check_if_exists_or_write(join_strings(
-                self.selective_fitted_path, SETTINGS["paths"]["cumulative_selected_path"]), save=False, verbose=True)
+                self.selective_fitted_path, get_cumulative_filename("selected_sub_path")), save=False, verbose=True)
         else:
             cubs = os.listdir(self.selective_fitted_path)
             cubs.sort()
@@ -50,10 +50,8 @@ class gen_quad_plots:
                 cube_name = os.path.splitext(cub)[0]
                 all_data[cube_name] = check_if_exists_or_write(
                     join_strings(self.selective_fitted_path, cub), save=False, verbose=True)
+        all_data =  dict(sorted(all_data.items()))
         return all_data
-
-        x = 0
-
     def gen_cube_quads(self, data: dict, cube_index: int, cube_name: str = None):
         """
         C*****_1/
@@ -76,13 +74,14 @@ class gen_quad_plots:
         cube_ir = [data["meta"]["cube_ir"]["bands"][index]
                    for index in range(0, 352-96)]
         bands_done = 1
-        futures = []
         mpl.rcParams['path.simplify_threshold'] = 1.0
         mpl.style.use('fast')
+        plt.rcParams['font.family'] = 'serif'
         fit_obj = fit_data()
-
+        shift = 0
         for plot_index, (wave_band, wave_data) in enumerate(data.items()):
             if "µm_" not in wave_band:
+                shift +=1
                 continue
             if plot_index in SETTINGS["figure_generation"]["unusable_bands"]:
                 continue
@@ -94,16 +93,32 @@ class gen_quad_plots:
 
             fig, axs = plt.subplots(2, 2, figsize=(12, 12))
             axs = axs.flatten()
-            
+
+            #get the slant data
+            north_slant = wave_data["north_side"]
+            south_slant = wave_data["south_side"]
             #plot the cube and the lat
-            if plot_index < 96:
+            if plot_index-shift < 96:
                 suffix = "_vis"
-                axs[0].imshow(cube_vis[plot_index], cmap="gray")
-                axs[1].imshow(data["meta"]["cube_vis"]["lat"], cmap="gray")
+                axs[0].imshow(cube_vis[plot_index-shift], cmap="gray")
+                pic = data["meta"]["cube_vis"]["lat"]
+                north_slant_b = np.array([cube_vis[plot_index-shift][pixel_index[0], pixel_index[1]] for pixel_index in north_slant["pixel_indices"]])
+                south_slant_b = np.array([cube_vis[plot_index-shift][pixel_index[0], pixel_index[1]] for pixel_index in south_slant["pixel_indices"]])
             else:
                 suffix = "_ir"
-                axs[0].imshow(cube_ir[plot_index-96], cmap="gray")
-                axs[1].imshow(data["meta"]["cube_ir"]["lat"], cmap="gray")
+                axs[0].imshow(cube_ir[plot_index-96-shift], cmap="gray")
+                pic =  data["meta"]["cube_ir"]["lat"]
+                north_slant_b = np.array([cube_ir[plot_index-shift-96][pixel_index[0], pixel_index[1]] for pixel_index in north_slant["pixel_indices"]])
+                south_slant_b = np.array([cube_ir[plot_index-shift-96][pixel_index[0], pixel_index[1]] for pixel_index in south_slant["pixel_indices"]])
+            if not np.all(north_slant_b == north_slant["brightness_values"]):
+                raise ValueError("Brightness values do not match")
+            if not np.all(south_slant_b == south_slant["brightness_values"]):
+                raise ValueError("Brightness values do not match")
+            for pixel_index in north_slant["pixel_indices"]:
+                pic[pixel_index[0], pixel_index[1]] = -90
+            for pixel_index in south_slant["pixel_indices"]:
+                pic[pixel_index[0], pixel_index[1]] = -90               
+            axs[1].imshow(pic, cmap="gray")
             shape = data["meta"]["cube_ir"]["lat"].shape
             axs[1].plot([data["meta"]["center_of_cube" + suffix][1], data["meta"]["center_of_cube" + suffix][1] + np.sin(np.radians(data["meta"]["north_orientation" + suffix])) * 50],
                         [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] - np.cos(np.radians(data["meta"]["north_orientation" + suffix])) * 50], color=(0,0,0), label="North")
@@ -119,9 +134,7 @@ class gen_quad_plots:
             axs[1].set_xlim(0, shape[1]-1)
             axs[1].set_ylim(shape[0]-1, 0)
             
-            #get the slant data
-            north_slant = wave_data["north_side"]
-            south_slant = wave_data["south_side"]
+
             
             #put the slant data on to the lat array 
             area = len([dat for dat in data["meta"]["cube_vis"]["ground"].flatten() if dat != False])
@@ -181,7 +194,7 @@ class gen_quad_plots:
             
 
             #work with fits
-            if north_slant["meta"]["processing"]["fitted"] == True:
+            if north_slant["meta"]["processing"]["fitted"] == True and len(north_slant["fit"]["quadratic"]["optimal_fit"]) != 0:
                 normalized_distances = self.emission_to_normalized(emission_angle=north_slant["emission_angles"])
                 fitted_values = fit_obj.quadratic_limb_darkening(normalized_distances,*list(north_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
                 axs[2].plot(normalized_distances, fitted_values, color= (0.9,0.2,0.2), label = "fit")
@@ -194,7 +207,7 @@ class gen_quad_plots:
             
 
             
-            if south_slant["meta"]["processing"]["fitted"] == True:
+            if south_slant["meta"]["processing"]["fitted"] == True  and len(south_slant["fit"]["quadratic"]["optimal_fit"]) != 0:
                 normalized_distances = self.emission_to_normalized(emission_angle=south_slant["emission_angles"])
                 fitted_values = fit_obj.quadratic_limb_darkening(normalized_distances,*list(south_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
                 axs[3].plot(normalized_distances, fitted_values,color= (0.9,0.2,0.2), label = "fit")
@@ -272,7 +285,7 @@ class gen_quad_plots:
     def quad_all(self, multi_process: bool = False):
         data = self.get_data()
         self.force_write = (SETTINGS["processing"]["clear_cache"]
-                            or SETTINGS["processing"]["redo_figures"])
+                            or SETTINGS["processing"]["redo_quad_figure_generation"])
         self.cube_count = len(data)
         self.start_time = time.time()
         args = []
