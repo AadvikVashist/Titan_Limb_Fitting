@@ -11,11 +11,12 @@ import math
 from sklearn.metrics import r2_score
 import PIL
 import pyvims
-from .equirectangular import equi_cube
+from .equirectangular import equi_band
 from get_settings import join_strings, check_if_exists_or_write, SETTINGS
 from scipy.ndimage import gaussian_filter
 from scipy.interpolate import PchipInterpolator
 from scipy.optimize import brentq
+import cv2
 def simple_moving_average(x, N):
     result = []
     window = []
@@ -102,10 +103,15 @@ class nsa_analysis:
         
         return hc_band, nan_rows
     
-    def equirectangular(self, cube, band : int):
+    def equirectangular(self, cube, image = None, band: int = None):
         # take image and apply cylindrical projection
         # after cylindrical projection, remove extraneous longitude data
-        proj = pyvims.projections.equirectangular.equi_cube(cube,int(band),3)
+        if band is None and image is None:
+            raise ValueError("Must provide either image or band")
+        elif band is None:
+            proj = equi_band(cube, image, 3)
+        else: 
+            proj = pyvims.projections.equirectangular.equi_cube(cube,int(band),3)
         #equirectangular projection
         # img, (x, y), extent, cnt = equi_cube(c, band, n=512, interp="cubic")
         if self.figures["show_projection"]:
@@ -525,8 +531,7 @@ class nsa_analysis:
         else:
             return np.mean(ret_zero)
     def analyze_wave(self, projected_image, projected_lat, projected_lon, band):
-        # 6 seems to be best shift value
-        shift_amount= 6
+        shift_amount= 3
         
         lon_crop = projected_image[:,self.columns_with_data]
         if self.figures["lon_cropped_proj"]:
@@ -546,6 +551,7 @@ class nsa_analysis:
 
         if self.figures["lon_cropped_shifted_proj_gauss"]:
             gauss = self.compare_shifted_and_original(gaussian_filter(shifted_image,sigma = 3), projected_image)[:,self.columns_with_data]
+            plt.imshow(gauss, cmap = "gray")
             self.show()
         
         
@@ -559,12 +565,34 @@ class nsa_analysis:
             global_det = local_det
         det = global_det + 4*local_det; det /= 5
         return det, [global_det, local_dets, local_det]
+    def destripe(self, cube, band):
+        band = int(band)
+        img = cube[band]
+        img = cv2.medianBlur(img, 5) 
+        if self.figures["show_blur"]:
+            fig, axs =plt.subplots(1,2)
+            axs[0].imshow(cube[band], cmap = "gray")
+            axs[0].imshow(cube[band], cmap = "gray")
+            axs[1].imshow(img, cmap = "gray")
+            plt.show()
+        return img
+    def get_north_avg_vs_south(self, proj, proj_lat, proj_lon):
+        cols = np.sum(~np.isnan(proj), axis = 0) >= 0.9 * proj.shape[0]
+        proj = proj[:,cols]
+        proj_lat = proj_lat[:,cols]
+        proj_lon = proj_lon[:,cols]
+
+        north = proj[proj_lat > 0]
+        south = proj[proj_lat < 0]
+        north_avg = np.ma.mean(north)
+        south_avg = np.ma.mean(south)
         
+        return north_avg/south_avg, np.min((north_avg, south_avg))/np.max((north_avg, south_avg))
     def analyze_all_wavelengths(self):
         threshold_of_rows = 0.6
         #keep all the columns that have more than 60% of the rows with data
 
-        projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(self.cube_vis, 1)
+        projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(self.cube_vis, band = 1)
         
         #processes run on first projected image
         self.columns_with_data = np.sum(~np.isnan(projected_image), axis = 0) > threshold_of_rows * projected_image.shape[0]
@@ -575,14 +603,22 @@ class nsa_analysis:
         for band in self.cube_vis.bands:
             if int(band) not in self.usable_bands:
                 continue
+            # if int(band) != 5:
+            #     continue
+            destriped = self.destripe(self.cube_vis, band)
+            projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(self.cube_vis, image = destriped)
+            north_vs_south = self.get_north_avg_vs_south(projected_image, projected_lat, projected_lon)
+            if north_vs_south[1] > 0.5:
+                print("skipping band", band, "because north vs south is", north_vs_south[1])
+                continue
+            else: 
+                print(north_vs_south[1])
             start_time = time.time()    
             if self.figures["original_image"]:
                 fig = plt.figure(self.figure_keys["original_image"])
                 plt.imshow(self.cube_vis[int(band)], cmap = "gray")
                 plt.title("Cube from "+ self.cube_vis.flyby.name  +" at " +str(band) + "_"+str(self.cube_vis.w[band]) + " µm")
                 self.show()
-            
-            projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(self.cube_vis, band)
             
             lat, shit = self.analyze_wave(projected_image,projected_lat, projected_lon, band)
             lats.append(lat)
@@ -599,7 +635,7 @@ class nsa_analysis:
                 plt.title("Cube from "+ self.cube_ir.flyby.name  +" at " +str(band) + "_"+str(self.cube_ir.w[band]) + " µm")
                 self.show()
             
-            projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(self.cube_ir, band)
+            projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(self.cube_ir, band = band)
             
             lat, shit = self.analyze_wave(projected_image,projected_lat, projected_lon, band)
             lats.append(lat)

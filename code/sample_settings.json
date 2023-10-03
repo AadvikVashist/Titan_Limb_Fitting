@@ -4,33 +4,40 @@
 		"cube_sub_path": "original_cubes",
 		"analysis_sub_path": "cube_analysis",
 		"nsa_data_sub_path": "north_south_asymmetry",
-		"nsa_filtered_out_sub_path": "asymmetry_applied",
 		"sorted_sub_path": "sorted_and_filtered",
+		"nsa_filtered_out_sub_path": "nsa_filtered_out",
 		"fitted_sub_path": "fitted",
 		"selected_sub_path": "selected_fits",
+		"cumulative_path": "cumulative_",
 		"plot_sub_path": "figures",
 		"prod_figures_sub_path": "figures/prod",
 		"dev_figures_sub_path": "figures/dev",
-		"cumulative_data_path": "cumulative_data.pkl",
-		"cumulative_nsa_path": "cumulative_nsa_data.pkl",
-		"cumulative_nsa_applied_path": "cumulative_nsa_applied_data.pkl",
-		"cumulative_sorted_path": "cumulative_sorted_and_filtered_data.pkl",
-		"cumulative_fitted_path": "cumulative_fitted_data.pkl",
-		"cumulative_selected_path": "cumulative_selected_fits.pkl",
-		"figure_path_format": "{figure_type}_{fig_name}_{cube_name}_{index}.png",
+		"figure_path_format": "{figure_type}_{fig_name}_{index}_{cube_name}.png",
 		"figure_path_format_dev": "{figure_type}_{fig_name}_{cube_name}_{year}_{month}_{day}_{hour}_{minute}_{second}.png",
 		"figure_file_types": [".png", ".svg", ".pkl"],
-		"figure_full_preview_subpath" : "profile_previews",
-		"quad_figure_subpath" : "quads"
+		"figure_subpath": {
+			"preview" : "profile_previews", 
+			"quadrant" : "quads",
+			"image_overlay" : "image_overlays",
+			"u_vs_wavelength" : "u_vs_wavelength",
+			"u_vs_time_per_wavelength" : "u_vs_time_per_wavelength",
+			"u_vs_wavelength_all_cubes" : "u_vs_wavelength_all_cubes"
+
+		}
+		
 	},
 	"processing": {
-		"redo_polar_profile_calculations": false,
 		"redo_nsa_calculations": false,
+		"redo_polar_profile_calculations": false,
 		"redo_data_sorting_and_filtering": false,
 		"redo_nsa_geo_filtering" : true,
-		"redo_fitting": true,
+		"redo_fitting": false,
 		"redo_selection": true,
-		"redo_figures": false,
+		"redo_preview_figures_generation": true,
+		"redo_quad_figure_generation": true,
+		"redo_u_vs_wavelength_figure_generation" : true,
+		"redo_u_vs_time_per_wavelength_figure_generation" : true,
+		"redo_u_vs_wavelength_all_cubes_figure_generation" : true,
 		"clear_cache": false
 	},
 	"figure_generation": {

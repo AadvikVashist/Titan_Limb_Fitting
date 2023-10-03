@@ -225,3 +225,49 @@ def pixel_area(img, r=1):
     lats = np.linspace(-90, 90, h + 1)
     area = areaquad(0, lats[:-1], dlon, lats[1:], r=r)
     return np.broadcast_arrays(np.ones((1, w)), area[..., None])[1]
+
+
+def equi_band(c, data, ppd=4, n=512, res_min=1, interp='cubic'):
+    """VIMS cube equirectangular projected.
+
+    Parameters
+    ----------
+    c: pyvims.VIMS
+        Cube to interpolate.
+    data: int, float, str, list, tuple
+        VIMS band image or wavelength to plot.
+    ppd: int
+        Number of pixels per degree
+    n: int, optional
+        Number of pixel for the grid interpolation.
+    interp: str, optional
+        Interpolation method
+    res_min: float, optional
+        Minimal resolution
+
+    """
+    # Pixel data
+    # data = c[index]
+
+    # Pixel positions on the FOV tangent plane
+    pixels = c.ortho
+
+    # Contour positions on the FOV tangent plane
+    contour = c.cortho
+
+    # Orthographic resolution
+    res = max(np.min(np.max(contour, axis=1) - np.min(contour, axis=1)) / n, res_min)
+
+    # Equirectangular resolution at the equator
+    npix = 360 * ppd
+
+    # Sub-spacecraft location for initial orthographic projection
+    sc = c.sc
+
+    # Target radius for initial orthographic projection
+    r = c.target_radius
+
+    # Interpolate data (with mask)
+    return equi_interp(pixels, data, res, contour, sc, r, npix=npix, method=interp)
+
+

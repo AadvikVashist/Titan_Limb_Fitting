@@ -69,8 +69,8 @@ class insert_nsa:
         for index, cube_name in enumerate(data):      
             if os.path.exists(join_strings(self.save_dir, cube_name + ".pkl")) and not force_write:
                 print("NSA data already exists. Skipping...")
-                data[cube_name] = check_if_exists_or_write(join_strings(self.save_dir, cube_name + ".pkl"), save=False)
-                print(index,data[cube_name]["meta"]["nsa"]["nsa_latitude"])
+                cum_data[cube_name] = check_if_exists_or_write(join_strings(self.save_dir, cube_name + ".pkl"), save=False)
+                print(index,cum_data[cube_name]["nsa_latitude"])
                 continue
             elif not force_write:
                 appended_data = True

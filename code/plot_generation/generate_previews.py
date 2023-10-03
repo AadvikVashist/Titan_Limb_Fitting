@@ -209,6 +209,6 @@ class generate_cube_previews:
                 args.append([cube_data, index, cube_name])
         # self.generate_cube_previews(cube_data, cube_name)
         if multi_process == True:
-            with multiprocessing.Pool(processes=5) as pool:
+            with multiprocessing.Pool(processes=3) as pool:
                 pool.starmap(self.generate_cube_previews, args)
         # return args, self.generate_cube_previews

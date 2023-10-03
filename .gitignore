@@ -8,3 +8,5 @@ cumulative*.pkl
 data/previews/
 data/*/dev
 __pycache__
+data/figures/prod/quads/
+data/figures/prod/profile_previews/

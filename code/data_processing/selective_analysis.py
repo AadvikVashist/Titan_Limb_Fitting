@@ -159,7 +159,7 @@ class select_data:
                          "north_side": wave_data[300], "south_side": wave_data[240]}
             ret_value["north_side"]["angle"] = 300
             ret_value["south_side"]["angle"] = 240
-
+        ret_value["other_slants"] = wave_data
         return ret_value
 
 

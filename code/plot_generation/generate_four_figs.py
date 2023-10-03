@@ -9,9 +9,11 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import pyvims
 from data_processing.fitting import fit_data
-
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy import ndimage
+import cv2
 import multiprocessing
-
+from .misc_plotting import gen_plots
 
 def save_fig(fig, save_path):
     fig.savefig(save_path, dpi=150)
@@ -23,6 +25,8 @@ class gen_quad_plots:
             self.save_dir = join_strings(
                 SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["dev_figures_sub_path"],  SETTINGS["paths"]["figure_subpath"]["quadrant"])
         else:
+            self.dps_dir = join_strings(
+                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["prod_figures_sub_path"],  "DPS_55")
             self.save_dir = join_strings(
                 SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["prod_figures_sub_path"],  SETTINGS["paths"]["figure_subpath"]["quadrant"])
         self.devEnvironment = devEnvironment
@@ -79,6 +83,17 @@ class gen_quad_plots:
         plt.rcParams['font.family'] = 'serif'
         fit_obj = fit_data()
         shift = 0
+        
+        
+        
+        center_color = (1,0,0)
+        lowest_inc_color = (8/255,130/255,12/255)
+        north_color = (1,1,1)
+        south_color = (0.7,0.7,0.7)
+        north_slant_color = (66/255, 126/255, 167/255)
+        south_slant_color = (226/255,148/255,32/255)
+
+
         for plot_index, (wave_band, wave_data) in enumerate(data.items()):
             if "µm_" not in wave_band:
                 shift +=1
@@ -118,19 +133,24 @@ class gen_quad_plots:
                 pic[pixel_index[0], pixel_index[1]] = -90
             for pixel_index in south_slant["pixel_indices"]:
                 pic[pixel_index[0], pixel_index[1]] = -90               
-            axs[1].imshow(pic, cmap="gray")
+            im = axs[1].imshow(pic, cmap="gray")
             shape = data["meta"]["cube_ir"]["lat"].shape
             axs[1].plot([data["meta"]["center_of_cube" + suffix][1], data["meta"]["center_of_cube" + suffix][1] + np.sin(np.radians(data["meta"]["north_orientation" + suffix])) * 50],
-                        [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] - np.cos(np.radians(data["meta"]["north_orientation" + suffix])) * 50], color=(0,0,0), label="North")
+                        [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] - np.cos(np.radians(data["meta"]["north_orientation" + suffix])) * 50], color= north_color, label="North", linewidth=1)
             
             axs[1].plot([data["meta"]["center_of_cube" + suffix][1], data["meta"]["center_of_cube" + suffix][1] - np.sin(np.radians(data["meta"]["north_orientation" + suffix])) * 50],
-                        [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] + np.cos(np.radians(data["meta"]["north_orientation" + suffix])) * 50], color=(0.5,0.5,0.5), label="South")            
+                        [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] + np.cos(np.radians(data["meta"]["north_orientation" + suffix])) * 50], color= south_color, label="North", linewidth=1)      
 
-            axs[1].scatter(data["meta"]["center_of_cube" + suffix][1], data["meta"]["center_of_cube" + suffix][0], color=(1,0,0), s = 60 , label="Center of Disk")
-            axs[1].scatter(data["meta"]["lowest_inc_location" + suffix][1], data["meta"]["lowest_inc_location" + suffix][0], color=(0.2,0.5,0.7), s = 60 , label="Lowest Inc")
+            axs[1].scatter(data["meta"]["center_of_cube" + suffix][1], data["meta"]["center_of_cube" + suffix][0], color=center_color, s = 60 , label="Center of Disk")
+            axs[1].scatter(data["meta"]["lowest_inc_location" + suffix][1], data["meta"]["lowest_inc_location" + suffix][0], color=lowest_inc_color, s = 60 , label="Lowest Incidence Point")
 
-            axs[0].set_title(cube_name + " " + wave_band)
-            axs[1].set_title(cube_name + " lat")
+            axs[0].set_title(cube_name + " " + wave_band, fontsize=16)
+            axs[1].set_title(cube_name + " Latitudes", fontsize=16)
+            
+            divider = make_axes_locatable(axs[1])
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            plt.colorbar(im, cax=cax)
+            
             axs[1].set_xlim(0, shape[1]-1)
             axs[1].set_ylim(shape[0]-1, 0)
             
@@ -141,16 +161,17 @@ class gen_quad_plots:
             length = np.sqrt(area / np.pi) 
 
             axs[1].plot([data["meta"]["center_of_cube" + suffix][1], data["meta"]["center_of_cube" + suffix][1] + np.sin(np.radians(data["meta"]["north_orientation" + suffix] + north_slant["angle"])) * length],
-                        [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] - np.cos(np.radians(data["meta"]["north_orientation" + suffix] + north_slant["angle"])) * length], color=(0.2,0.6,0.3), label="north_side_profile")  
+                        [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] - np.cos(np.radians(data["meta"]["north_orientation" + suffix] + north_slant["angle"])) * length], color=north_slant_color, label="Northern Facing Slant", linestyle="dashed" ) 
             axs[1].plot([data["meta"]["center_of_cube" + suffix][1], data["meta"]["center_of_cube" + suffix][1] + np.sin(np.radians(data["meta"]["north_orientation" + suffix] + south_slant["angle"])) * length],
-                        [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] - np.cos(np.radians(data["meta"]["north_orientation" + suffix] + south_slant["angle"])) * length], color=(0.2,0.5,0.6), label="south_side_profile")  
+                        [data["meta"]["center_of_cube" + suffix][0], data["meta"]["center_of_cube" + suffix][0] - np.cos(np.radians(data["meta"]["north_orientation" + suffix] + south_slant["angle"])) * length],color=south_slant_color, label="South Facing Slant", linestyle="dashed", )
             axs[1].legend(loc="upper left")
 
 
 
-            #start bottom row of plots
-            axs[2].set_title(cube_name + "  " + wave_band + " " + str(north_slant["angle"]) + "° relative to north")
-            axs[3].set_title(cube_name + "  " + wave_band + " " + str(south_slant["angle"]) + "° relative to north")
+            #start bottom row of plots 
+            
+            axs[2].set_title(str(north_slant["angle"]) + "° relative to north", fontsize=16)
+            axs[3].set_title(str(south_slant["angle"]) + "° relative to north", fontsize=16)
 
 
             #figure out what the best y range is for the plot
@@ -165,58 +186,57 @@ class gen_quad_plots:
                 
             #set plot styles
             
-            axs[2].set_xlabel("Normalized Distance")
-            axs[2].set_ylabel("Brightness Value")
+            axs[2].set_xlabel("Normalized Distance (from center of disk)", fontsize=12)
+            axs[2].set_ylabel("Brightness Value", fontsize=14)
             axs[2].set_ylim(y_min,y_max)
             axs[2].set_xlim(0,1)
-            axs[2].set_yticks(np.arange(y_min,y_max+0.001,0.01))
-            axs[2].set_xticks(np.arange(0,1.1,0.1))
+            axs[2].set_yticks(np.arange(y_min,y_max+0.001,0.01), labels = np.around(np.arange(y_min,y_max+0.001,0.01), 3), fontsize=14)
+            axs[2].set_xticks(np.arange(0,1.1,0.1), labels = np.around(np.arange(0,1.1,0.1), 3), fontsize=14)
             axs[2].set_xticks(np.arange(0,1.1,0.05), minor=True)
             
-            axs[3].set_xlabel("Normalized Distance")
-            axs[3].set_ylabel("Brightness Value")
+            axs[3].set_xlabel("Normalized Distance (from center of disk)", fontsize=12)
+            axs[3].set_ylabel("Brightness Value", fontsize=14)
             axs[3].set_ylim(y_min,y_max)
 
             axs[3].set_xlim(0,1)
-            axs[3].set_yticks(np.arange(y_min,y_max+0.001,0.01))
-            axs[3].set_xticks(np.arange(0,1.1,0.1))
+            axs[3].set_yticks(np.arange(y_min,y_max+0.001,0.01), labels = np.around(np.arange(y_min, y_max+0.001, 0.01),3),  fontsize=14)
+            axs[3].set_xticks(np.arange(0,1.1,0.1), labels = np.around(np.arange(0,1.1,0.1), 3),  fontsize=14)
             axs[3].set_xticks(np.arange(0,1.1,0.05), minor=True)
             
 
 
-
             #plot the data
             normalized_distances = self.emission_to_normalized(emission_angle=north_slant["emission_angles"])
-            axs[2].plot(normalized_distances, north_slant["brightness_values"], color= (0.2,0.6,0.3), label="north_side_profile")
+            axs[2].plot(1 - normalized_distances, north_slant["brightness_values"], color= (0.2,0.6,0.3), label="north_side_profile")
 
-            normalized_distances = self.emission_to_normalized(emission_angle=south_slant["emission_angles"])
-            axs[3].plot(normalized_distances, south_slant["brightness_values"], color=(0.2,0.5,0.6), label="south_side_profile")
-            
+
 
             #work with fits
             if north_slant["meta"]["processing"]["fitted"] == True and len(north_slant["fit"]["quadratic"]["optimal_fit"]) != 0:
-                normalized_distances = self.emission_to_normalized(emission_angle=north_slant["emission_angles"])
-                fitted_values = fit_obj.quadratic_limb_darkening(normalized_distances,*list(north_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
-                axs[2].plot(normalized_distances, fitted_values, color= (0.9,0.2,0.2), label = "fit")
-                string = '\n'.join([str(key) + " : " + str(item) for key,item in north_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].items()])  + "\n r2_score: " + str(north_slant["fit"]["quadratic"]["optimal_fit"]["r2"])
+                interp_distances = np.linspace(np.min(normalized_distances),np.max(normalized_distances),50)
+                fitted_values = fit_obj.quadratic_limb_darkening(interp_distances,*list(north_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
+                axs[2].plot(1 - interp_distances, fitted_values, color= (0.9,0.2,0.2), label = "fit")
+                string = '\n'.join([str(key) + " : " + str(np.around(item,4)) for key,item in north_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].items()])  + "\n r2_score: " + str(np.around(north_slant["fit"]["quadratic"]["optimal_fit"]["r2"],4))
                 axs[2].text(0.95, 0.03, string,
                         verticalalignment='bottom', horizontalalignment='right',
                         transform=axs[2].transAxes,
                         color='black', fontsize=10,
-                        bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 5})
+                        bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
             
+            normalized_distances = self.emission_to_normalized(emission_angle=south_slant["emission_angles"])
+            axs[3].plot(1 - normalized_distances, south_slant["brightness_values"], color=(0.2,0.5,0.6), label="south_side_profile")
 
             
             if south_slant["meta"]["processing"]["fitted"] == True  and len(south_slant["fit"]["quadratic"]["optimal_fit"]) != 0:
-                normalized_distances = self.emission_to_normalized(emission_angle=south_slant["emission_angles"])
-                fitted_values = fit_obj.quadratic_limb_darkening(normalized_distances,*list(south_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
-                axs[3].plot(normalized_distances, fitted_values,color= (0.9,0.2,0.2), label = "fit")
-                string = '\n'.join([str(key) + " : " + str(item) for key,item in south_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].items()])  + "\n r2_score: " + str(south_slant["fit"]["quadratic"]["optimal_fit"]["r2"])
+                interp_distances = np.linspace(np.min(normalized_distances),np.max(normalized_distances),50)
+                fitted_values = fit_obj.quadratic_limb_darkening(interp_distances,*list(south_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
+                axs[3].plot(1 - interp_distances, fitted_values,color= (0.9,0.2,0.2), label = "fit")
+                string = '\n'.join([str(key) + " : " +str(np.around(item,4)) for key,item in south_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].items()])  + "\n r2_score: " + str(np.around(south_slant["fit"]["quadratic"]["optimal_fit"]["r2"],4))
                 axs[3].text(0.95, 0.03, string,
                         verticalalignment='bottom', horizontalalignment='right',
                         transform=axs[3].transAxes,
                         color='black', fontsize=10,
-                        bbox={'facecolor': 'white', 'alpha': 0.8, 'pad': 5})
+                        bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
             
 
             axs[2].legend()
@@ -224,48 +244,8 @@ class gen_quad_plots:
 
             axs[3].legend()
             axs[3].grid(True, which='both', axis='both', linestyle='--')
-    
-
-            #     axs[plot_index].set_title(str(slant) + "° relative to north")
-
-            #     data_plot = axs[plot_index].plot(normalized_distances, brightness_values, label = "data")
-            #     # smooth_plot = axs[plot_index].plot(normalized_distances, gaussian_filter(brightness_values, sigma= 3), label = "data with gaussian")
-
-            #     axs[plot_index].set_xlabel("Normalized Distance")
-            #     axs[plot_index].set_ylabel("Brightness Value")
-            #     axs[plot_index].set_xlim(0,1)
-            #     axs[plot_index].set_xticks(np.arange(0,1.1,0.1), minor=True)
-
-            #     # y_box.extend(brightness_values)
-            #     if index == 0:
-            #         handles.extend(data_plot)
-
-            #         # handles.extend(smooth_plot)
-            #     if slant_data["meta"]["processing"]["fitted"] == True:
-            #         fitted_values = fit_obj.quadratic_limb_darkening(normalized_distances,*list(slant_data["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
-            #         fit_plot = axs[plot_index].plot(normalized_distances, fitted_values, label = "fit")
-            #         if len(handles) < 2:
-            #             handles.extend(fit_plot)
-
-            #     # plt.plot(distances, self.limb_darkening_function(
-            #         # distances, popt[0], popt[1]))
-            #     # Smooth data using moving average
-
-            # #set y_lim
-            # # min_box = np.min(y_box); max_box = np.max(y_box); box_range = max_box - min_box
-            # # min_box -= box_range * 0.1; max_box += box_range * 0.1
-
-            # for index in range(len(wave_data.keys())):
-            #     plot_index = 2+index
-            #     axs[plot_index].set_ylim(0.02,0.08)
-
             fig.tight_layout()
 
-            # if len(handles) == 2:
-            #     fig.legend(handles, ["data", "fit"], loc='upper left')  # Set the legend to the top-left corner
-            # else:
-            #     fig.legend(handles, ["data"], loc='upper left')  # Set the legend to the top-left corner
-            # List to keep track of the futures
             fig.savefig(join_strings(self.save_dir, cube_name, band_wave + ".png"), dpi=150)
             # plt.show()
             plt.close()
@@ -282,6 +262,170 @@ class gen_quad_plots:
         print("Cube", cube_index + 1, "of", self.cube_count, "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
               np.around(total_time_left, 2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds\n")
 
+
+
+
+    def gen_cube_quad_dps(self, data: dict, cube_index: int, cube_name: str = None,band_value = 115):
+        """
+        C*****_1/
+            0.5µm_1/
+                0
+                30
+                45
+                ...
+
+        """
+        leng = len(data.keys()) - \
+            len(SETTINGS["figure_generation"]["unusable_bands"])
+        if not os.path.exists(self.dps_dir):
+            os.makedirs(self.dps_dir)
+        # cube_vis = pyvims.VIMS(cube_name + "_vis.cub", join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["cube_sub_path"],cube_name), channel="vis")
+        # cube_ir = pyvims.VIMS(cube_name + "_ir.cub",  join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["cube_sub_path"],cube_name), channel="ir")
+
+        cube_vis = [data["meta"]["cube_vis"]["bands"][index]
+                    for index in range(0, 96)]
+        cube_ir = [data["meta"]["cube_ir"]["bands"][index]
+                   for index in range(0, 352-96)]
+        mpl.rcParams['path.simplify_threshold'] = 1.0
+        mpl.style.use('fast')
+        # plt.rcParams['font.family'] = 'serif'
+        fit_obj = fit_data()
+        shift = 0
+        
+        
+
+        north_slant_color =  np.array((96,163,208))/255
+        south_slant_color = (226/255,148/255,32/255)
+        fit_color = np.array((67,97,0))/255
+        x = gen_plots(devEnvironment=self.devEnvironment)
+        x.gen_image_overlay_dps(cube_name, band_value)
+        for plot_index, (wave_band, wave_data) in enumerate(data.items()):
+            if "µm_" not in wave_band:
+                shift +=1
+                continue
+            if int(wave_band.split("_")[1]) != band_value:
+                continue
+            band_wave = wave_band.split("_")[1] + "_" + wave_band.split("_")[0]
+
+
+            fig, axs = plt.subplots(1, 2, figsize=(12, 8))
+            axs = axs.flatten()
+
+            #get the slant data
+            north_slant = wave_data["north_side"]
+            south_slant = wave_data["south_side"]
+            #plot the cube and the lat
+            if plot_index-shift < 96:
+                suffix = "_vis"
+                pic = cube_vis[plot_index-shift]
+                north_slant_b = np.array([cube_vis[plot_index-shift][pixel_index[0], pixel_index[1]] for pixel_index in north_slant["pixel_indices"]])
+                south_slant_b = np.array([cube_vis[plot_index-shift][pixel_index[0], pixel_index[1]] for pixel_index in south_slant["pixel_indices"]])
+            else:
+                suffix = "_ir"
+                pic = cube_ir[plot_index-96-shift]
+                north_slant_b = np.array([cube_ir[plot_index-shift-96][pixel_index[0], pixel_index[1]] for pixel_index in north_slant["pixel_indices"]])
+                south_slant_b = np.array([cube_ir[plot_index-shift-96][pixel_index[0], pixel_index[1]] for pixel_index in south_slant["pixel_indices"]])
+            if not np.all(north_slant_b == north_slant["brightness_values"]):
+                raise ValueError("Brightness values do not match")
+            if not np.all(south_slant_b == south_slant["brightness_values"]):
+                raise ValueError("Brightness values do not match")
+            for pixel_index in north_slant["pixel_indices"]:
+                pic[pixel_index[0], pixel_index[1]] = 0
+            for pixel_index in south_slant["pixel_indices"]:
+                pic[pixel_index[0], pixel_index[1]] = 0  
+            #start bottom row of plots 
+            
+            axs[0].set_title(str(north_slant["angle"]) + "° relative to north", fontsize=16)
+            axs[1].set_title(str(south_slant["angle"]) + "° relative to north", fontsize=16)
+
+
+            #figure out what the best y range is for the plot
+            range_vals = list(north_slant["brightness_values"]); range_vals.extend(south_slant["brightness_values"])
+            y_range = np.max(range_vals) - np.min(range_vals)
+            y_min = np.min(range_vals) - y_range * 0.1; y_min -= y_min % 0.01
+            y_max = np.max(range_vals) + y_range * 0.1; y_max += y_max % 0.01
+            
+            if y_range < 0.05:
+                axs[0].set_yticks(np.arange(y_min,y_max+0.001,0.0025), minor=True)
+                axs[1].set_yticks(np.arange(y_min,y_max+0.001,0.0025), minor=True)
+                
+            #set plot styles
+            
+            axs[0].set_xlabel("Normalized Distance (from center of disk)", fontsize=12)
+            axs[0].set_ylabel("Brightness Value", fontsize=14)
+            axs[0].set_ylim(y_min,y_max)
+            axs[0].set_xlim(0,1)
+            axs[0].set_yticks(np.arange(y_min,y_max+0.001,0.01), labels = np.around(np.arange(y_min,y_max+0.001,0.01), 3), fontsize=14)
+            axs[0].set_xticks(np.arange(0,1.1,0.1), labels = np.around(np.arange(0,1.1,0.1), 3), fontsize=14)
+            axs[0].set_xticks(np.arange(0,1.1,0.05), minor=True)
+            
+            axs[1].set_xlabel("Normalized Distance (from center of disk)", fontsize=12)
+            axs[1].set_ylabel("Brightness Value", fontsize=14)
+            axs[1].set_ylim(y_min,y_max)
+
+            axs[1].set_xlim(0,1)
+            axs[1].set_yticks(np.arange(y_min,y_max+0.001,0.01), labels = np.around(np.arange(y_min, y_max+0.001, 0.01),3),  fontsize=14)
+            axs[1].set_xticks(np.arange(0,1.1,0.1), labels = np.around(np.arange(0,1.1,0.1), 3),  fontsize=14)
+            axs[1].set_xticks(np.arange(0,1.1,0.05), minor=True)
+            
+
+
+            #plot the data
+            normalized_distances = self.emission_to_normalized(emission_angle=north_slant["emission_angles"])
+            axs[0].plot(1 - normalized_distances, north_slant["brightness_values"], color= north_slant_color, label="Northern Transect", linewidth=5)
+
+
+
+            #work with fits
+            if north_slant["meta"]["processing"]["fitted"] == True and len(north_slant["fit"]["quadratic"]["optimal_fit"]) != 0:
+                interp_distances = np.linspace(np.min(normalized_distances),np.max(normalized_distances),50)
+                fitted_values = fit_obj.quadratic_limb_darkening(interp_distances,*list(north_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
+                axs[0].plot(1 - interp_distances, fitted_values, color= fit_color, label = "Quadratic Best Fit", linestyle="dashed", linewidth=2)
+                string = '\n'.join([str(key) + " : " + str(np.around(item,4)) for key,item in north_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].items()])  + "\n r2_score: " + str(np.around(north_slant["fit"]["quadratic"]["optimal_fit"]["r2"],4))
+                axs[0].text(0.95, 0.03, string,
+                        verticalalignment='bottom', horizontalalignment='right',
+                        transform=axs[0].transAxes,
+                        color='black', fontsize=10,
+                        bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
+            
+            normalized_distances = self.emission_to_normalized(emission_angle=south_slant["emission_angles"])
+            axs[1].plot(1 - normalized_distances, south_slant["brightness_values"], color= south_slant_color, label="Southern Transect", linewidth=5)
+
+            
+            if south_slant["meta"]["processing"]["fitted"] == True  and len(south_slant["fit"]["quadratic"]["optimal_fit"]) != 0:
+                interp_distances = np.linspace(np.min(normalized_distances),np.max(normalized_distances),50)
+                fitted_values = fit_obj.quadratic_limb_darkening(interp_distances,*list(south_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].values()))
+                axs[1].plot(1 - interp_distances, fitted_values,color= fit_color, label = "Quadratic Best Fit", linestyle="dashed", linewidth=2)
+                string = '\n'.join([str(key) + " : " +str(np.around(item,4)) for key,item in south_slant["fit"]["quadratic"]["optimal_fit"]["fit_params"].items()])  + "\n r2_score: " + str(np.around(south_slant["fit"]["quadratic"]["optimal_fit"]["r2"],4))
+                axs[1].text(0.95, 0.03, string,
+                        verticalalignment='bottom', horizontalalignment='right',
+                        transform=axs[1].transAxes,
+                        color='black', fontsize=10,
+                        bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 5})
+            
+
+            axs[0].legend(fontsize = 14)
+            axs[0].grid(True, which='both', axis='both', linestyle='--')
+
+            axs[1].legend(fontsize = 14)
+            axs[1].grid(True, which='both', axis='both', linestyle='--')
+            fig.tight_layout()
+            fig.subplots_adjust(wspace=0.2)
+
+            
+
+            path = join_strings(self.dps_dir, "plots_" + cube_name + "_" + band_wave + ".png")
+            fig.savefig(path, dpi=500)
+            print("Saved to", path)
+            plt.close()
+            
+    def quad_dps(self, cube_name_key: str = None):
+        data = self.get_data()
+        for index, (cube_name, cube_data) in enumerate(data.items()):
+            if cube_name != cube_name_key: 
+                continue
+            self.gen_cube_quad_dps(cube_data, index, cube_name)
+
     def quad_all(self, multi_process: bool = False):
         data = self.get_data()
         self.force_write = (SETTINGS["processing"]["clear_cache"]
@@ -297,5 +441,5 @@ class gen_quad_plots:
             else:
                 self.gen_cube_quads(cube_data, index, cube_name)
         if multi_process:
-            with multiprocessing.Pool(processes=5) as pool:
+            with multiprocessing.Pool(processes=3) as pool:
                 pool.starmap(self.gen_cube_quads, args)

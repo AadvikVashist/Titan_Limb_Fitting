@@ -346,7 +346,7 @@ class fit_data:
         print()
         return data
 
-    def multi_process_func(self, cube_data, index, cube_name):
+    def multi_process_func(self, cube_data, index, cube_name, save_on_end: dict = None):
         self.ret_data[cube_name] = self.fit(cube_data, cube_name)
         check_if_exists_or_write(join_strings(self.save_dir, cube_name + ".pkl"), data=self.ret_data[cube_name], save=True, force_write=True)
         time_spent = np.around(time.time() - self.cube_start_time, 3)
@@ -354,13 +354,10 @@ class fit_data:
         total_time_left = time_spent / percentage_completed - time_spent
         print("Cube", index + 1,"of", self.cube_count , "| Total time for cube:", np.around(time_spent, 1), "seconds | Total Expected time left:",
                 np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time,1), "seconds"                       )        
-
+        if save_on_end is not None:
+            self.save_cumulative(force_write=save_on_end["force_write"], appended_data=save_on_end["appended_data"])
     def save_cumulative(self, force_write: bool = False, appended_data: bool = True):
-        # for cube in os.listdir(self.save_dir):
-        #     match = re.fullmatch(r'C.*_.*\.pkl', cube) 
-        #     if match is None:
-        #         continue
-        #     self.cum_data[cube[0:-4]] = check_if_exists_or_write(join_strings(self.save_dir, cube), save=False)
+
         if (os.path.exists(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path"))) and appended_data):
             print("Fitted data already exists, but new data has been appended")
             check_if_exists_or_write(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path")), data = self.ret_data, save=True, force_write=True)
@@ -399,9 +396,12 @@ class fit_data:
             else:
                 self.multi_process_func(cube_data, index, cube_name)
         if multi_process:
-            with multiprocessing.Pool(processes=5) as pool:
+            with multiprocessing.Pool(processes=3) as pool:
                 pool.starmap(self.multi_process_func, args)
-        self.save_cumulative(force_write=force_write, appended_data=appended_data )
+                pool.close()
+                pool.join()  # This line ensures that all processes are done
+        self.save_cumulative(force_write=force_write, appended_data=appended_data)
+
             
     def fit_all(self, fit_types: str = "all", multi_process: bool = False):
         self.data = self.get_filtered_data()
@@ -432,6 +432,8 @@ class fit_data:
                 self.multi_process_func(cube_data, index, cube_name)
 
         if multi_process:
-            with multiprocessing.Pool(processes=5) as pool:
+            with multiprocessing.Pool(processes=3) as pool:
                 pool.starmap(self.multi_process_func, args)
-        self.save_cumulative(force_write=force_write, appended_data=appended_data )
+                pool.close()
+                pool.join()  # This line ensures that all processes are done
+        self.save_cumulative(force_write=force_write, appended_data=appended_data)
