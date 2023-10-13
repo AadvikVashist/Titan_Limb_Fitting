@@ -43,6 +43,7 @@ class nsa_analysis:
             self.usable_bands = usable_bands
         else:
             self.usable_bands = SETTINGS["figure_generation"]["nsa_bands"]
+        self.unusable_bands = SETTINGS["figure_generation"]["unusable_bands"]
         #create all class paths,directories, and variables
         # self.createDirectories(directory, datasetName)
         # self.createLists(purpose, datasetName)
@@ -499,7 +500,7 @@ class nsa_analysis:
         indexed_lats = {}
         for key in np.unique(projected_lat):
             values = projected_image[projected_lat == key]
-            if np.ma.all(np.ma.getmask(values)):
+            if np.ma.all(np.ma.getmask(values)) or len(values) == 0:
                 continue
             else:
                 mean_value = np.nanmean(values)
@@ -576,22 +577,49 @@ class nsa_analysis:
             axs[1].imshow(img, cmap = "gray")
             plt.show()
         return img
-    def get_north_avg_vs_south(self, proj, proj_lat, proj_lon):
-        cols = np.sum(~np.isnan(proj), axis = 0) >= 0.9 * proj.shape[0]
-        proj = proj[:,cols]
-        proj_lat = proj_lat[:,cols]
-        proj_lon = proj_lon[:,cols]
-
-        north = proj[proj_lat > 0]
-        south = proj[proj_lat < 0]
+    def get_north_avg_vs_south(self, band, band_lat, ground):
+        band = np.ma.masked_array(band, mask=ground)
+        north = band[band_lat > 20]
+        south = band[band_lat < -20]
+        
         north_avg = np.ma.mean(north)
         south_avg = np.ma.mean(south)
         
         return north_avg/south_avg, np.min((north_avg, south_avg))/np.max((north_avg, south_avg))
+    
+    def eye_calibration(self, cube_vis, cube_ir):
+        projs = []
+        vis_bands = []
+        ir_bands = []
+        for band in cube_vis.bands:
+            if band in self.unusable_bands and band not in self.usable_bands:
+                continue
+            band = int(band)
+            vis_bands.append(cube_vis[band])
+            # print("processed band", band, "of", len(cube_vis.bands) + len(cube_ir.bands), end = "\r")
+        for band in cube_ir.bands:
+            if band in self.unusable_bands:
+                continue
+            band = int(band)
+            ir_bands.append(cube_ir[band])
+            # projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(cube_ir, band = band)
+            # if len(projs) == 0:
+            #     projs = projected_image
+            # else:
+            #     projs += projected_image
+        
+        proj_vis, _, _, _= self.equirectangular(cube_vis, image = np.mean(vis_bands, axis = 0))
+        proj_ir, _, _, _= self.equirectangular(cube_ir, image = np.mean(ir_bands, axis = 0))
+
+        # print("processed band", band, "of", len(cube_vis.bands) + len(cube_ir.bands), end = "\r")    
+        proj = (proj_vis+proj_ir)/2
+        plt.imshow(proj, cmap = "gray")
+        plt.show()
+        x = 0
     def analyze_all_wavelengths(self):
         threshold_of_rows = 0.6
         #keep all the columns that have more than 60% of the rows with data
-
+        self.eye_calibration(self.cube_vis, self.cube_ir)
         projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(self.cube_vis, band = 1)
         
         #processes run on first projected image
@@ -601,18 +629,18 @@ class nsa_analysis:
         index = 0
         leng =  len(self.usable_bands)
         for band in self.cube_vis.bands:
-            if int(band) not in self.usable_bands:
-                continue
+            # if int(band) not in self.usable_bands:
+            #     continue
             # if int(band) != 5:
             #     continue
             destriped = self.destripe(self.cube_vis, band)
             projected_image, (projected_lon, projected_lat), _, _= self.equirectangular(self.cube_vis, image = destriped)
-            north_vs_south = self.get_north_avg_vs_south(projected_image, projected_lat, projected_lon)
-            if north_vs_south[1] > 0.5:
-                print("skipping band", band, "because north vs south is", north_vs_south[1])
-                continue
-            else: 
-                print(north_vs_south[1])
+            north_vs_south = self.get_north_avg_vs_south(self.cube_vis[int(band)], self.cube_vis.lat, self.cube_vis.ground)
+            # if north_vs_south[1] > 0.6:
+            #     print("skipping band", band, "because north vs south is", north_vs_south[1])
+            #     continue
+            # else: 
+            #     print(north_vs_south[1])
             start_time = time.time()    
             if self.figures["original_image"]:
                 fig = plt.figure(self.figure_keys["original_image"])

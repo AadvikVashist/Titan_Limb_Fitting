@@ -8,7 +8,7 @@ from data_processing.sort_and_filter import sort_and_filter
 from data_processing.filter_using_nsa import process_nsa_data_for_fitting
 from data_processing.fitting import fit_data
 from data_processing.selective_analysis import select_data
-
+from data_processing.transition_period_wavelength import transition_wave
 
 from plot_generation.generate_previews import generate_cube_previews
 from plot_generation.generate_four_figs import gen_quad_plots
@@ -39,10 +39,10 @@ if __name__ == '__main__':
     # print("Starting to analyze dataset data\n\n")
     # analyze = analyze_complete_dataset()
     # analyze.complete_dataset_analysis()
-    
-    # # print("Starting to analyze north south asymmetry data\n\n")
-    # # analyze = insert_nsa()
-    # # analyze.insert_nsa_data_in_all()
+
+    print("Starting to analyze north south asymmetry data\n\n")
+    analyze = insert_nsa()
+    analyze.insert_nsa_data_in_all()
     # print("Starting to sort and filter data\n\n")
     # filter = sort_and_filter()
     # filter.sort_and_filter_all()
@@ -62,18 +62,19 @@ if __name__ == '__main__':
     # fit.check_stats()
     # fit.run_selection_on_all()
     
-    plots = gen_quad_plots(devEnvironment=False)
-    plots.quad_dps("C1477437155_1")
+    # plots = gen_quad_plots(devEnvironment=False)
+    # plots.quad_dps("C1477437155_1")
     # plots.quad_all(multi_process=True)
     
     # print("Generating previews\n\n")    
     # preview = generate_cube_previews(devEnvironment=False)
     # preview.enumerate_all(multi_process=True)
-    misc = gen_plots(True)
-    misc.gen_image_overlay(cube_name="C1477437155_1", band=118)
+    # misc = gen_plots(True)
+    # misc.gen_image_overlay(cube_name="C1477437155_1", band=118)
 
-    plots = gen_u1_u2_figures(False)
+    # plots = gen_u1_u2_figures(False)
     # plots.gen_u_vs_time(False)
-    plots.u1_u2_all_figures(multi_process=False)
+    # plots.u1_u2_all_figures(multi_process=False)
     
-    
+    detector = transition_wave()
+    detector.run_transitional_detector_all()

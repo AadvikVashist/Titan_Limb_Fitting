@@ -315,28 +315,28 @@ if __name__ == "__main__":
 
 
 
-    existing_cubes = ["C1477437155_1",
-    "C1487070016_1",
-    "C1509087583_1",
-    "C1519673575_1",
-    "C1559103132_1",
-    "C1560489660_1",
-    "C1560494730_1",
-    "C1561892179_1",
-    "C1629935228_1",
-    "C1629974346_1",
-    "C1634084887_1",
-    "C1649224228_1",
-    "C1654504364_1",
-    "C1681931457_1",
-    "C1702548750_1",
-    "C1702617349_1",
-    "C1721931258_1",
-    "C1826042588_1",
-    ]
-    #C1654504364_1 is bad
-    #1702617349_1 is bad
-    cube_flybys = [get_flyby_from_cube_name(data, cube) for cube in existing_cubes]
+    # existing_cubes = ["C1477437155_1",
+    # "C1487070016_1",
+    # "C1509087583_1",
+    # "C1519673575_1",
+    # "C1559103132_1",
+    # "C1560489660_1",
+    # "C1560494730_1",
+    # "C1561892179_1",
+    # "C1629935228_1",
+    # "C1629974346_1",
+    # "C1634084887_1",
+    # "C1649224228_1",
+    # "C1654504364_1",
+    # "C1681931457_1",
+    # "C1702548750_1",
+    # "C1702617349_1",
+    # "C1721931258_1",
+    # "C1826042588_1",
+    # ]
+    # #C1654504364_1 is bad
+    # #1702617349_1 is bad
+    # cube_flybys = [get_flyby_from_cube_name(data, cube) for cube in existing_cubes]
     
     
     
@@ -345,43 +345,24 @@ if __name__ == "__main__":
     # limb = get_limb(data)
     refined_search = get_info_cubes(data)
     # refined_search = get_targeted_flyby(refined_search)
-    refined_search = get_filtered_phase(refined_search, [0, 25])
+    refined_search = get_filtered_phase(refined_search, [0, 20])
     refined_search = get_vis_and_ir(refined_search)
     # refined_search = get_filtered_res(refined_search, 30)
     refined_search = get_limb(refined_search, True)
     refined_search = filter_km_pixel(refined_search, 200)
-    search_with_na = get_equatorial_latitude(refined_search, [-20, 20], True)
+    search_with_na = get_equatorial_latitude(refined_search, [-15, 15], True)
     
-    refined_search = remove_ones_with_existing_flybys(refined_search, cube_flybys)
-    # search_without_na = get_equatorial_latitude(
-    #     refined_search, [-20, 20], False)
-    # search_with_na = [
-    #     x for x in search_with_na if x not in search_without_na[1::]]
-
-
+    # refined_search = remove_ones_with_existing_flybys(refined_search, cube_flybys)
     # move the first row back to its original location
-    header = refined_search[0]
-    refined_search = refined_search[1::]
-    refined_search.reverse()
-    refined_search.insert(0, header)
+    # header = refined_search[0]
+    # refined_search = refined_search[1::]
+    # refined_search.reverse()
+    # refined_search.insert(0, header)
 
     # move the first element back to its original location
-
-        
-    # cube_flybys = ['1875672803_1', '1875671109_1', '1875670660_1', '1716388270_1', '1716386209_1', '1716384148_1', '1706666203_1', '1706661703_1', '1687339977_1', '1687339594_1', '1687323133_1']
-    # refined_search = get_cubes_with_flyby(refined_search, cube_flybys)
     refined_search = select_best_per_flyby(refined_search)
     searched = get_names_of_cubes(refined_search)
     print(searched)
-    # AASDIVK JUST LOKED AT THE ONES ABOCE
-    # refined_search = filter_cubes_by_name(refined_search, search_without_na)
-    dictionary = {}
-    header_index =  [index for index, h in enumerate(refined_search[0]) if "flyby" in h.lower()][0]
-    for cube in refined_search[1::]:
-        if cube[header_index] not in dictionary:
-            dictionary[cube[header_index]] = [cube]
-        else:
-            dictionary[cube[header_index]].append(cube)
     
 
     # square_cubes = get_square_cubes(refined_search)
