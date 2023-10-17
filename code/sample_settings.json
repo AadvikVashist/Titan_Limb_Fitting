@@ -21,7 +21,8 @@
 			"image_overlay" : "image_overlays",
 			"u_vs_wavelength" : "u_vs_wavelength",
 			"u_vs_time_per_wavelength" : "u_vs_time_per_wavelength",
-			"u_vs_wavelength_all_cubes" : "u_vs_wavelength_all_cubes"
+			"u_vs_wavelength_all_cubes" : "u_vs_wavelength_all_cubes",
+			"transitional_period" : "transitional_period"
 
 		}
 		

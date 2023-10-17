@@ -1,5 +1,5 @@
-from .polar_profile import analyze_complete_dataset
-from .sort_and_filter import sort_and_filter
+from data_processing.polar_profile import analyze_complete_dataset
+from data_processing.sort_and_filter import sort_and_filter
 from get_settings import join_strings, check_if_exists_or_write, SETTINGS, get_cumulative_filename
 import re
 import time
@@ -55,6 +55,26 @@ class transition_wave:
         zeros = x[np.where(np.diff(np.sign(y)))[0]]
         zeros = [zero for zero in zeros if zero > 0.5]
         return np.mean(zeros)
+    
+    def detector_smoothed_comparison(self, x, y):
+        smoothed_y = gaussian_filter(y, sigma=4)
+        interp = PchipInterpolator(x, smoothed_y)
+        zeros = []
+        x = np.linspace(np.min(x), np.max(x), 3000)
+        y = interp(x)
+        zeros = x[np.where(np.diff(np.sign(y)))[0]]
+        smooth_zeros = [zero for zero in zeros if zero > 0.5]
+        
+        interp = PchipInterpolator(x, y)
+        zeros = []
+        x = np.linspace(np.min(x), np.max(x), 3000)
+        y = interp(x)
+        zeros = x[np.where(np.diff(np.sign(y)))[0]]            
+        for index, smooth_zero in enumerate(smooth_zeros):
+            smooth_zero = np.mean([zero for zero in zeros if abs(zero-smooth_zero) < 0.2])
+            smooth_zeros[index] = smooth_zero
+        return smooth_zeros
+
     def run_transitional_detector(self, data: dict, cube_name: str = None):
         leng = len(data.keys()) - 1
 
@@ -82,13 +102,26 @@ class transition_wave:
         wave_bands = np.array(wave_bands)[mask]
         northern_transect = np.array(northern_transect)[mask]
         southern_transect = np.array(southern_transect)[mask]
-        northern_transition = self.cubic_interp_zeros(wave_bands, northern_transect)
-        southern_transition = self.cubic_interp_zeros(wave_bands, southern_transect)
-        
+        smoothed_northern_transect = gaussian_filter(northern_transect, sigma=4)
+        smoothed_southern_transect = gaussian_filter(southern_transect, sigma=4)
+        northern_transition = self.detector_smoothed_comparison(wave_bands, northern_transect)
+        southern_transition = self.detector_smoothed_comparison(wave_bands, southern_transect)
+        transects =[]
+        if len(northern_transition) > 1:
+            transects.extend(northern_transition)
+        else:
+            transects.append(northern_transition[0])
+        if len(southern_transition) > 1:
+            transects.extend(southern_transition)
+        else:
+            transects.append(southern_transition[0])
+        plt.figure(figsize=(15, 5))
+        # plt.plot(wave_bands, smoothed_northern_transect, label = "Northern Transect Smoothed")
+        # plt.plot(wave_bands, smoothed_southern_transect, label = "Southern Transect Smoothed")
         plt.plot(wave_bands, northern_transect, label = "Northern Transect")
         plt.plot(wave_bands, southern_transect, label = "Southern Transect")
         plt.hlines(0, np.min(wave_bands), np.max(wave_bands), linestyles="dashed", label="Zero", color="black")
-        plt.vlines([northern_transition, southern_transition], np.min(northern_transect), np.max(northern_transect), linestyles="dashed", label="Transition", color="red")
+        plt.vlines(transects, np.min(northern_transect), np.max(northern_transect), linestyles="dashed", label="Transition", color="red")
         plt.legend()
         fig_path = join_strings(self.save_dir, cube_name + ".png")
         plt.savefig(fig_path, dpi = 300)
@@ -126,25 +159,15 @@ class transition_wave:
         if not os.path.exists(self.save_dir):
             os.makedirs(self.save_dir)
         for index, (cube_name, cube_data) in enumerate(data.items()):
-            # if os.path.exists(join_strings(self.save_dir, cube_name + ".pkl")) and not force_write:
-            #     try:
-            #         data[cube_name] = check_if_exists_or_write(
-            #             join_strings(self.save_dir, cube_name + ".pkl"), save=False)
-            #         print("selected data already exists. Skipping...")
-            #         continue
-            #     except:
-            #         print("selected data corrupted. Processing...")
-            # elif not force_write:
-            #     appended_data = True
             self.cube_start_time = time.time()
             # only important line in this function
             cube_time.append(self.get_time(cube_data["meta"]["cube_vis"]["time"]))
 
             detector = self.run_transitional_detector(cube_data, cube_name)
             
-            transition_north.append(detector[0])
-            transition_south.append(detector[1])
-            mean_transition.append(np.mean([detector[0], detector[1]]))
+            transition_north.append(np.mean(detector[0]))
+            transition_south.append(np.mean(detector[1]))
+            mean_transition.append(np.mean([np.mean(detector[0]), np.mean(detector[1])]))
         plt.title("Transition Periods vs time")
         plt.plot(cube_time, transition_north, label="Northern Transition")
         plt.plot(cube_time, transition_south, label="Southern Transition")
