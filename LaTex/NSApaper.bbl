@@ -1,0 +1,17 @@
+\begin{thebibliography}{}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\providecommand{\url}[1]{\href{#1}{#1}}
+\providecommand{\dodoi}[1]{doi:~\href{http://doi.org/#1}{\nolinkurl{#1}}}
+\providecommand{\doeprint}[1]{\href{http://ascl.net/#1}{\nolinkurl{http://ascl.net/#1}}}
+\providecommand{\doarXiv}[1]{\href{https://arxiv.org/abs/#1}{\nolinkurl{https://arxiv.org/abs/#1}}}
+
+\bibitem[{Brown {et~al.}(2004)Brown, Baines, Bellucci, Bibring, Buratti, Capaccioni, Cerroni, Clark, Coradini, Cruikshank, {et~al.}}]{brown2004cassini}
+Brown, R.~H., Baines, K.~H., Bellucci, G., {et~al.} 2004, Space Science Reviews, 115, 111
+
+\bibitem[{Brown {et~al.}(2001)Brown, Charbonneau, Gilliland, Noyes, \& Burrows}]{brown2001hubble}
+Brown, T.~M., Charbonneau, D., Gilliland, R.~L., Noyes, R.~W., \& Burrows, A. 2001, The Astrophysical Journal, 552, 699
+
+\bibitem[{Kopal(1950)}]{kopal1950limb}
+Kopal, Z. 1950, Harvard College Observatory Circular, 454, pp. 1-12, 454, 1
+
+\end{thebibliography}

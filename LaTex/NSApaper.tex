@@ -1,0 +1,153 @@
+%\cSpell:disable
+\documentclass[tighten,linenumbers,twocolumn]{aastex631}
+\makeatletter
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.15}
+\renewcommand{\floatpagefraction}{0.7}
+\textheight 10.0in % sets textheight
+\textwidth 7.5 in% sets textwidth
+\voffset -1in %
+\hoffset -0.50in % sets vert. and horiz offsets
+ \journalinfo{ }
+% \submitted{}
+\usepackage{wasysym, multirow, soul, graphicx,lmodern}
+\usepackage{hyperref}
+%\usepackage[usenames,dvipsnames]{color}
+%\usepackage{textcomp}
+%\usepackage{gensymb}
+%\usepackage{lineno}
+%\usepackage{soul}
+
+\linenumbers
+\def\Rsat{$\mathrm{R}_{\mathrm{\saturn}}$} 
+\def\um{\mathrm{\mu m}}
+
+\newcommand{\editTwo}[1]{{\textbf{#1}}}
+\newcommand{\old}[1]{}
+
+
+\shorttitle{Titan's NSA at Equinox}
+\shortauthors{Vashist \emph{et al.}}
+\bibpunct[, ]{(}{)}{;}{a}{,}{,} 
+
+
+\begin{document}
+
+\title{Tentative Title:}
+% All Authors
+\author[0000-0002-6318-7226]{Aadvik Vashist}\affiliation{Department of Physics; University of Idaho; Moscow, ID 83844}\affiliation{River Hill High School; Clarksville, MD; 21029}
+\author[0000-0002-7755-3530]{Jason W. Barnes}\affiliation{Department of Physics; University of Idaho; Moscow, ID 83844}
+% \author[0000-0001-8528-4644]{Ralph D. Lorenz}\affiliation{Johns Hopkins University Applied Physics Laboratory; Laurel, MD 20723}
+
+\correspondingauthor{Aadvik Vashist}
+\email{avashist@uidaho.edu}
+
+%Abstract
+%\cSpell:enable
+
+\begin{abstract}
+We document the evolution of the North-South Asymmetry (NSA) of Titan's haze albedo during the \textit{Cassini} mission between 2004 and 2017.
+We analyze co-added cube images taken at 96 distinct wavelengths between 0.35-1.05~$\um$ by the \textit{Cassini} Visual and Infrared Mapping Spectrometer (VIMS-V) instrument from 14 Titan flybys.
+Over half of a Titan year, we observe a near-complete transition in the NSA boundary latitude across the geographic equator from the southern to the northern hemisphere, including a 3-year fading of the boundary for several years after the equinox.
+The fading transition of the NSA matches previous observations of a reversal of the NSA in Hubble images of Titan before the winter solstice between 1997-2000. A comparison of NSA images taken at similar times but different phase angles shows the NSA boundary is detectable, albeit with less contrast, at moderately high phase angles ($\sim$90\textdegree). Analysis of the NSA boundary in T61 and T67 VIMS images further supports a small tilt between the super-rotating atmosphere and the solid body of Titan, as suggested in a previous analysis of 0.890~$\um$ images from the \textit{Cassini} Imaging Science Subsystem (ISS). 
+\end{abstract}
+\keywords{Titan, Upper atmosphere, Seasonal phenomena}
+
+
+
+%Introduction
+\section{INTRODUCTION}
+% Saturn's moon Titan exhibits many properties not found in other satellites. As first observed by Voyager 1 \citep{smith1981encounter}, Titan's ubiquitous atmospheric haze prevents optical imaging of the surface. The haze distribution varies as a function of latitude \citep{Sromovsky1981}, altitude \citep{smith1982new,tomasko2005rain}, and time \citep{lorenz1997titan,west2011evolution}. Titan's haze also shows albedo differences between its northern and southern hemispheres that shift near the equator. As the seasons progress, atmospheric circulation changes the global haze distribution, culminating in a reversal every 15 years \citep{brown2009titan}. The reversal presents as an albedo dichotomy in the otherwise featureless atmosphere. The existence of the asymmetry also results in a distinct boundary line that separates the north and south hemispheres.
+
+% The Voyager 1 flyby highlighted the existence of a North-South Asymmetry (NSA) between the two hemispheres \citep{smith1981encounter}. Previous discoveries also found a tilt of the boundary line relative to the solid-body equator of Titan \citep{Roman2009}. The boundary, as reported by \cite{Sromovsky1981} with Voyager 1 data, was located at roughly 5.5\textdegree{}S. More recent discoveries show a seasonal reversal in the latitude of the asymmetry across the equator.
+
+% Movement of the NSA boundary reveals essential details of the global atmospheric properties and circulation patterns of Titan \citep{hirtzig2006monitoring}. Titan disk observations from flyby missions and professional telescopes provide sporadic temporal and wavelength coverage of the NSA, leading to incomplete records on haze circulation with large errors \citep{lorenz2001titan,lorenz2004seasonal}. In addition, previous studies often use special case methodologies, where results are tied to their data-sets to calculate and subsequently compare those previous NSA boundary latitudes \citep{Roman2009}.
+
+% More recent studies have the temporal coverage to study detailed aspects for a substantial portion of the NSA cycle with individual data sets. \cite{karkoschka2022titan} modeled the NSA reversal at different altitudes with HST Space Telescope Imaging Spectrograph image cubes. \cite{kutsop2022titan} completed an analysis of circumglobal haze bands in a variety of Cassini imagery data sets. 
+
+% In this paper, we document on the seasonal changes in Titan's lower atmospheric haze near the equator using the \textit{Cassini} observations of visible wavelengths for purposes of comparison with previous studies. The observation of seasonal haze changes through visible wavelengths allows us to extend the time baseline of previous observations and to coherently track one seasonal cycle with a single uniform dataset. The \textit{Cassini} Visual and Infrared Mapping Spectrometer (VIMS) collected spectral maps at 96 visible and near-infrared wavelengths between 0.35-1.05~$\um$, which predominantly sampled the stratosphere ($\sim$70-120 km). 
+
+
+
+% Section 2 describes how we modify the main NSA image analysis algorithm from \cite{Roman2009} with considerations for the VIMS data characteristics. In Section 3, We determine the latitude of the asymmetry at 76 of the 96 distinct wavelengths, excluding atmospheric windows where the visible surface precludes haze measurements \citep{vixie2012mapping}. Each distinct wavelength accesses a different altitude because of the varying atmospheric opacity. In Section 4, we locate the latitude of the NSA Boundary on 13 distinct flybys. We also determine the albedo contrast between the northern and southern hemispheres with regard to wavelength to calculate the boundary latitude, north-south flux ratios, and tilt angles of the asymmetry.
+% Finally, in Section 5, we compare our results to the existing archive of NSA boundary observations and discuss the implications of these findings on the atmospheric conditions of Titan.
+
+
+
+\section{OBSERVATIONS and METHODS}
+As shown in \textbf{table will go here}, we analyze Cassini VIMS-V and VIMS-IR observations from \textbf{xyz} targeted flybys and \textbf{xyz} targeted flybys, spanning the Cassini probe's 13 year operational period from 2004-2017. 
+
+The VIMS instruments have been well characterized \cite{brown2004cassini}, with the VIMS-V (Visual) channel of the using a two-dimensional array detector covering a spectral range from 0.30 to 1.05 µm with 96 distinct bands and the VIMS-IR (Infrared) channel using a one-dimensional detector covering a broader spectral range of 0.3 to 5.1 µm with 256 wavelength bands.
+\subsection{Cube Selection}
+
+We selected flybys using the following criteria: (1) simultaneous observations from both the VIMS-V and VIMS-IR instruments; (2) a low phase angle; (3) full-disk coverage with high limb visibility; (4) sufficient spatial resolution (200km/pixel); (5) sub-spacecraft longitude between 20\textdegree{}S and 20\textdegree{}N; and (6) sufficient time cadence so as to obtain a comprehensive distribution of measurements during the \textit{Cassini} mission. It is important to note that during the latter half of the \textit{Cassini} mission, the spacecraft was in a polar orbit, which limited the number of flybys that met the above criteria, leading to the selection of non-targeted flybys and sparser temporal coverage.
+
+\subsection{Image Processing}
+\label{sec: image processing}
+
+Calibrated VIMS-V data was processed to remove any variations in vertical pixel arrangements. Destriping was performed by masking surface results and deducting the average value from each vertical pixel line, effectively eliminating inconsistencies in the transects. This correction was feasible owing to the cube selection, which ensures that each selected data cube encompasses space for a portion of all the vertical pixel lines. All post-processed data was validated through a comparison of the original and processed images. There was no post-processing on calibrated VIMS-IR cubes. Known surface bands from \textbf{paper to cite here} were not included in the analysis to avoid contamination of the haze signal.
+
+
+Limb profiles were sampled from flyby observations of Titan using a transect method. The center of the disk for each cube was determined by locating where the line normal to the stellar surface is collinear with the line of sight of the observer within each cube and determining where the emission angle would be 0. Transects were sampled for various angles relative to North, aiming to sample the northern and southern hemispheres. As shown in \textbf{transect fig}, transects are selected based on the angle relative to the equator and the direction relative to East/West. We select two transects, one sampling the Northern hemisphere 30\textdegree{} North of the equator and the other 30\textdegree{} South of the equator. The choice of East/West facing transects is determined based on the viewing geometry, sampling data on the hemisphere that does not contain the terminator. Functionally, this is determined based on the hemispheric location of the point with the lowest angle between the incoming sunlight and the normal line to the planetary surface. Given that the latitude of the atmospheric dichotomy is rarely the same as the solid-body equator, transect data that is within a pixel of the North-South Boundary is removed, including any data points between the boundary and the center of the disk. The result is two transects for each band of each VIMS-V and VIMS-IR cube.
+
+
+\subsection{Quadratic Limb Darkening Law Regression}
+
+To determine the magnitude of limb darkening and brightening within each transect, we fit the data using the known stellar Quadratic Limb Darkening Law (QLDL) from \cite{kopal1950limb, brown2001hubble}. 
+
+\begin{equation}
+    \frac{I(\mu)}{I(1)} = \left[1 - u_{1}(1 - \mu) - u_{2}(1 - \mu)^2\right]
+\end{equation}
+
+Where $\mu$ is the cosine of the angle between a line normal to the stellar surface and the line of sight of the observer leading to a scale from 1 to 0, one representing the center of the disk and 0 being the limb. $I(1)$ represents the intensity at the center of the disk. $u_{1}$ and $u_{2}$ are limb darkening coefficients. The limb darkening coefficients alone are not well constrained. So to measure the magnitude of limb darkening/brightening, we use $\left.\frac{1}{I(1)}\frac{dI}{d\mu}\right|_{\mu=0.5} = u_{1} + u_{2}$. Regression used a Levenberg-Marquardt algorithm with no parameter bounds applied, though initial values for positive values indicate limb darkening, while negative values indicate limb brightening. Since the sampling density decreases with emission angle, limb pixels gained increased weighting. Resulting fits are compared to the original data in \textbf{quadrant fig}. Variations in accuracy are largely attributed to noise in the raw data and lower sampling density at higher emission angles.
+
+Visually, the limb darkening is prevalent at lower, visible, wavelengths, while the limb brightening is more prominent at higher, near-infrared, wavelengths, though the wavelength where darkening and brightening transition seemingly evolves. The differences in limb darkening and brightening are logical when factoring the low albedo of haze at visible wavelengths and the increased haze-ratio at higher altitudes. Limb observations also reinforce existing knowledge of the north-south asymmetry's visual shift, with a strong hemispheric dichotomy seen in most bands.  
+
+
+% As shown in \autoref{table: data}, we analyze Cassini VIMS observations of Titan from 12 targeted flybys from 2004-2015 and 2 non-targeted flybys taken in 2017. Each flyby observed Titan from $0.356~\um$ to $1.046~\um$\ in 96 distinct wavelength channels to sample the transition from Southern Summer to Northern Summer \citep{brown2004cassini}. We selected these particular flybys based on boundary visibility, sufficient time cadence, and baseline so as to obtain measurements spaced out over the entire period of \textit{Cassini} observations. For a majority of the flybys, the spatial sampling per pixel is $\sim$45 km or 1\textdegree{} of latitude. 
+% For the NSA, one hemisphere appears brighter and the other dimmer, with a semi-distinct line near the tropics (i.e., low latitudes) dividing the two. Which hemisphere is which depends on the season and the observed wavelength that samples at different altitudes as shown in \autoref{figure:nsa_2bands}. \cite{lorenz1997titan} attributes the reversal to the separately varying single-scattering albedo of the haze and gas as a function of wavelength. 
+% At short visible wavelengths (\autoref{figure:nsa_2bands}, left), the haze has a low albedo, but the gas itself is relatively bright due to Rayleigh scattering. Thus, more haze leads to a darker hemisphere at short wavelengths. 
+% At near-infrared wavelengths close to the visible (\autoref{figure:nsa_2bands}, right), however, the haze single-scattering albedo is high, and methane starts to absorb, making the gas dim. So higher haze concentrations make a hemisphere brighter at long wavelengths.
+% The Cassini VIMS flybys used in this study had varied spacecraft distances, leading to a range of spatial resolutions. We chose these particular flybys as ones where a majority or all of Titan's disk is observed.
+% \autoref{figure:flowchart} outlines our VIMS image processing algorithm. An issue found in the VIMS data is the vertical striping noise in the original images. We could not directly correct the striping noise because the data used to subtract the background on board Cassini was not transmitted back to Earth \citep{brown2004cassini}. To mitigate the striping issues, we increased the signal-to-noise ratio by co-adding images, and then mapping the final co-added image onto a cylindrical projection \citep{vixie2012mapping}. The spatial sampling of the cylindrical images is $\sim$45 km or 1\textdegree{} of latitude. Note that the vertical striping appears as superimposed stripes across cylindrical projections. Additionally, these projections do not include limb pixels with an emission angle above 60$^\circ$ and thus minimize limb-darkening effects. Images at 96 distinct wavelengths, also known as bands, were created for each flyby. 
+% After we generate a final set of images, we adapt the methods from \cite{Roman2009} to determine the latitude of the NSA boundary. We shift the images by 6\textdegree{}N and 6\textdegree{}S and then subtract to create a brightness contrast of each image, which highlights the presence of an asymmetry \citep{Roman2009}. These maps were then sequentially analyzed along each longitude using a sixth-order polynomial fit to smooth out signal variations. We found the locations of critical points using the derivative function of the fit; extraneous values, such as imaginary solutions and numbers outside of the latitude range, were removed to leave only the latitude location of the NSA at each longitude column. Our algorithm then finds the latitude value of the NSA transition for all the columns within each projection and then averages them to determine the location of the NSA for each band in the flyby. Since each column has a varied value for the NSA, we applied a moving average to the data to flatten irregularities in column brightness data. Using the latitude value found in each image, we apply a simple average of the brightness 30\textdegree{}N and 30\textdegree{}S of the NSA transition to determine the North/South Flux Ratio. We derive I/F values using average visible latitude, where each latitude is an average of all visible longitudinal brightness values. 
+% We can attribute various inaccuracies in our results to sampling area, surface wavelengths, changing sub-solar and sub-spacecraft latitudes, and/or phase angle differences within the flybys. We determine uncertainties in our image processing algorithm through the standard deviation of the derived latitude value of every image. Additionally, instrumental artifacts and noise within the VIMS-V instrument play a factor. Inherent systematic errors also derive from the softness of the boundary itself and any potential offset between the atmospheric pole and the geographic pole.
+
+%\cSpell:disable
+\begin{deluxetable*}{|ccccccccc|}%rlcrrrrrr|}
+\tablecaption{North-South Boundary Observations\label{table: data}}
+%\rotate
+\tablewidth{0pt}
+\tablehead{
+\colhead{Year} &
+\colhead{Month} &
+\colhead{Source} &
+\colhead{Cassini flyby} &
+\colhead{$L_s$ ($^\circ$)} &
+\colhead{Sub-Spacecraft Latitude ($^\circ$)} &
+\colhead{Spatial Resolution (km/pixel)} &
+\colhead{Phase Angle ($^\circ$)}
+}\startdata
+\hline
+2007 & May &Cassini/VIMS&TA & 333&-12.0&$-12\pm3$& 0 & 0 \\
+2007 & May &Cassini/VIMS&TA & 333&-12.0&$-12\pm3$& 0 & 0 \\
+\hline
+\enddata
+\tablenotetext{1}{non-targeted flyby of Titan}
+%\tablecomments{. }
+\end{deluxetable*}
+%\cSpell:enable
+
+
+
+
+
+\begin{acknowledgments}
+AV is supported by the Dyess Fellowship at the University of Idaho. JWB is supported by NASA Cassini Data Analysis Program grant 80NSSC19K0896. We also acknowledge support from the NASA/ESA \emph{Cassini} project.
+\end{acknowledgments}
+
+\bibliography{NSAreferences.bib}
+\bibliographystyle{aasjournal}
+
+\end{document}
