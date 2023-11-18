@@ -2,7 +2,17 @@
     "paths": {
         "parent_data_path": "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/data",
         "parent_figures_path": "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/",
-		"parent_path" : "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/",
+		"parent_path" : "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/",	
+		"latex" : {
+			"latex_path" : "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/LaTex",
+			"table_path" : "generation/table.tex"
+		},
+
+
+		"ingestion" : { 
+			"ingestion_path" : "fitting_code/ingestion",
+			"nantes_file_location" : "data/combined_nantes.pickle"
+		},
 		"cube_json" : "settings/s3xy_cubes.json",
 
 		"cube_sub_path": "original_cubes",

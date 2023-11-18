@@ -42,7 +42,6 @@ def check_if_exists_or_write(file: str, base: str = None, prefix: str = None, fi
             if verbose:
                 print("Saved", full_path)
         elif full_path.endswith(".json"):
-
             with open(full_path, "w") as file_object:
                 json.dump(data, file_object)
             if verbose:
@@ -56,6 +55,11 @@ def check_if_exists_or_write(file: str, base: str = None, prefix: str = None, fi
                 print("Saved", full_path)
         elif full_path.endswith(".png") or full_path.endswith(".jpg") or full_path.endswith(".jpeg") or full_path.endswith(".tiff") or full_path.endswith(".tif"):
             cv2.imwrite(full_path, data)
+            if verbose:
+                print("Saved", full_path)
+        elif full_path.endswith(".tex") or full_path.endswith(".txt"):
+            with open(full_path, 'w') as file_object:
+                file_object.write(data)
             if verbose:
                 print("Saved", full_path)
         else:
@@ -73,6 +77,9 @@ def check_if_exists_or_write(file: str, base: str = None, prefix: str = None, fi
                 data = pd.read_csv(full_path)
             elif full_path.endswith(".png") or full_path.endswith(".jpg") or full_path.endswith(".jpeg") or full_path.endswith(".tiff") or full_path.endswith(".tif"):
                 data = Image.open(full_path)
+            elif full_path.endswith(".tex") or full_path.endswith(".txt"):
+                with open(full_path, 'r') as file_object:
+                    data = file_object.read()
             else:
                 data = None
             return data

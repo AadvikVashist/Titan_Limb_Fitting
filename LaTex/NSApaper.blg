@@ -1,0 +1,47 @@
+This is BibTeX, Version 0.99d (TeX Live 2023)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: NSApaper.aux
+The style file: aasjournal.bst
+Database file #1: NSAreferences.bib
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+You've used 3 entries,
+            3168 wiz_defined-function locations,
+            674 strings with 5382 characters,
+and the built_in function-call counts, 1364 in all, are:
+= -- 104
+> -- 108
+< -- 1
++ -- 36
+- -- 40
+* -- 116
+:= -- 262
+add.period$ -- 3
+call.type$ -- 3
+change.case$ -- 16
+chr.to.int$ -- 3
+cite$ -- 3
+duplicate$ -- 49
+empty$ -- 83
+format.name$ -- 41
+if$ -- 268
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 3
+newline$ -- 17
+num.names$ -- 12
+pop$ -- 18
+preamble$ -- 1
+purify$ -- 16
+quote$ -- 0
+skip$ -- 40
+stack$ -- 0
+substring$ -- 45
+swap$ -- 0
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 27
+warning$ -- 0
+while$ -- 11
+width$ -- 0
+write$ -- 37

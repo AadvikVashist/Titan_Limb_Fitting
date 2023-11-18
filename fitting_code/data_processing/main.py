@@ -1,13 +1,13 @@
 
 from settings.get_settings import join_strings, check_if_exists_or_write, SETTINGS
 
-from data_processing.polar_profile import analyze_complete_dataset
+from .polar_profile import analyze_complete_dataset
 
-from data_processing.process_nsa import insert_nsa
-from data_processing.sort_and_filter import sort_and_filter
-from data_processing.filter_using_nsa import process_nsa_data_for_fitting
-from data_processing.fitting import fit_data
-from data_processing.selective_analysis import select_data
+from .process_nsa import insert_nsa
+from .sort_and_filter import sort_and_filter
+from .filter_using_nsa import process_nsa_data_for_fitting
+from .fitting import fit_data
+from .selective_analysis import select_data
 from typing import Union
 
 def process_nsa_data():

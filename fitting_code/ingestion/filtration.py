@@ -9,6 +9,9 @@ import webbrowser
 import time
 # import get_cubes_from_json
 import fitting_code.ingestion.get_cubes_from_json as get_cubes_from_json
+from settings.get_settings import join_strings, check_if_exists_or_write, SETTINGS
+
+
 def convert_dates(date):
     date_list = date.replace(":", "-").split("-")
     date_list = [d for d in date_list if len(d) > 0]
@@ -208,14 +211,14 @@ def select_cubes_based_on_images(cubes):
     for cube in cubes[1::]:
         cube_name = cube[name_index]
         webbrowser.open_new_tab(base + cube_name)
-        #1
+        # 1
         # 4/8 1519673575_1
-        #1
-        #1
-        #1/4
-        #1
-        #2/2
-        #1
+        # 1
+        # 1
+        # 1/4
+        # 1
+        # 2/2
+        # 1
         while True:
             inp = input("Do you want to keep this cube? (y/n)")
             if inp.lower() == "" or inp.lower() == "y":
@@ -239,6 +242,7 @@ def get_square_cubes(csv):
         header) if "samples lines" in h.lower()][0]
     return [header] + [c for c in csv[1::] if "n/a" not in c[header_index] and c[header_index].split("x")[0] == c[header_index].split("x")[1]]
 
+
 def get_flyby_from_cube_name(data, cube_name):
     if "C" in cube_name:
         cube_name = cube_name[1::]
@@ -248,7 +252,7 @@ def get_flyby_from_cube_name(data, cube_name):
             val = row[11]
     return val
 
-    
+
 def get_cubes_with_flyby(cubes, flybys):
     header = cubes[0]
     name_index = [index for index, h in enumerate(
@@ -260,22 +264,25 @@ def get_cubes_with_flyby(cubes, flybys):
             cubes.remove(cube)
     return cubes
 
+
 def remove_ones_with_existing_flybys(data, flybys):
     header = data[0]
-    header_index = [index for index, h in enumerate(header) if "flyby" in h.lower()][0]
+    header_index = [index for index, h in enumerate(
+        header) if "flyby" in h.lower()][0]
     return [row for row in data if row[header_index] not in flybys]
 
 
 def select_best_per_flyby(data):
     base = "https://vims.univ-nantes.fr/cube/"
     dictionary = {}
-    header_index =  [index for index, h in enumerate(data[0]) if "flyby" in h.lower()][0]
+    header_index = [index for index, h in enumerate(
+        data[0]) if "flyby" in h.lower()][0]
     for cube in data[1::]:
         if cube[header_index] not in dictionary:
             dictionary[cube[header_index]] = [cube]
         else:
             dictionary[cube[header_index]].append(cube)
-            
+
     selections = []
     for key, value in dictionary.items():
         indices = [val[0] for val in value]
@@ -311,11 +318,11 @@ def select_best_per_flyby(data):
         dictionary[key] = sorted(dictionary[key], key=lambda x: x[0])
     dictionary = dictionary
     return selections
-    
-    
+
+
 def get_existing_data_in_json_and_eliminate(data):
     cubs = get_cubes_from_json.CUBES["selected"]
-    cubs.update( get_cubes_from_json.CUBES["removed"])
+    cubs.update(get_cubes_from_json.CUBES["removed"])
     flybys = []
     for index, (flyby, cub) in enumerate(cubs.items()):
         flybyx = get_flyby_from_cube_name(data, cub)
@@ -332,10 +339,8 @@ def get_existing_data_in_json_and_eliminate(data):
 
 
 def run():
-    with open(os.path.join('/'.join(__file__.split("/")[0:-1]), "data/combined_nantes.pickle"), "rb") as f:
-        # Use pickle to dump the variable into the file
-        data = pickle.load(f)
-    
+
+    data = check_if_exists_or_write(join_strings(SETTINGS["paths"]["parent_path"], SETTINGS["paths"]["ingestion"]["ingestion_path"], SETTINGS["paths"]["ingestion"]["nantes_file_location"]), save = False, verbose = True)
     data = get_existing_data_in_json_and_eliminate(data)
     refined_search = get_info_cubes(data)
     # refined_search = get_targeted_flyby(refined_search)

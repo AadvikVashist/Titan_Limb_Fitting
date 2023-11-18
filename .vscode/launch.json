@@ -16,7 +16,7 @@
             "name": "Master_Limb",
             "type": "python",
             "request": "launch",
-            "program": "fitting_code/master.py",
+            "program": "master.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }

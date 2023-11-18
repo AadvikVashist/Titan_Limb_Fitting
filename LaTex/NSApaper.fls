@@ -799,7 +799,6 @@ INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmcsco10.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmex10.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmmi10.pfb
-INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmmi6.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmmi7.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmmi9.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmr10.pfb
@@ -812,4 +811,3 @@ INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmri8.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmss8.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmsy10.pfb
 INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmsy6.pfb
-INPUT /usr/local/texlive/2023/texmf-dist/fonts/type1/public/lm/lmsy9.pfb

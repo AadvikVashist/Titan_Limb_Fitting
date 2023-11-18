@@ -1,5 +1,5 @@
-from fitting_code.ingestion import get_cubes_from_json
-from fitting_code.ingestion import filtration
+from . import get_cubes_from_json
+from . import filtration
 
 
 def ingest_all():
