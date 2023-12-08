@@ -29,11 +29,9 @@ class sort_and_filter:
                 ind_shift+=1
                 continue
             if index >= 96+ind_shift:
-                mask = np.where(data["meta"]["cube_ir"]["ground"], True, False)
                 eme = data["meta"]["cube_ir"]["eme"]
                 image = data["meta"]["cube_ir"]["bands"][index-ind_shift-96]
             else:
-                mask = np.where(data["meta"]["cube_vis"]["ground"], True, False)
                 eme = data["meta"]["cube_vis"]["eme"]
                 image = data["meta"]["cube_vis"]["bands"][index-ind_shift]
 
@@ -72,8 +70,8 @@ class sort_and_filter:
                     raise ValueError("Brightness values not equal")
                 data[wave_band][slant]["sorted"] = data[wave_band][slant]
                 data[wave_band][slant]["sorted"]["pixel_indices"] = pixel_indices; data[wave_band][slant]["sorted"]["pixel_distances"] = pixel_distances; data[wave_band][slant]["sorted"]["emission_angles"] = eme_angles; data[wave_band][slant]["sorted"]["brightness_values"] = b_values
-                filter_data_by_eme_and_ground_arr = np.where(eme_angles <= 89.5, True, False)
-                filter_data_by_eme_and_ground_arr = np.where(mask[pixel_indices[:,0], pixel_indices[:,1]] == True, filter_data_by_eme_and_ground_arr, False)
+                filter_data_by_eme_and_ground_arr = np.where(eme_angles <= 89, True, False)
+                # filter_data_by_eme_and_ground_arr = np.where(mask[pixel_indices[:,0], pixel_indices[:,1]] == True, filter_data_by_eme_and_ground_arr, False)
                 
                 if np.min(np.diff(eme_angles[filter_data_by_eme_and_ground_arr])) < -1:
                     plt.imshow(eme, cmap="gray")
@@ -82,12 +80,12 @@ class sort_and_filter:
                     plt.show() 
                     raise ValueError("pixel_distances or eme angles not monotonically increasing")
                 if (not any(filter_data_by_eme_and_ground_arr)) or len(filter_data_by_eme_and_ground_arr) == 0:
-                    plt.imshow(np.where(mask, eme, 0))
+                    # plt.imshow(np.where(mask, eme, 0))
                     plt.scatter(pixel_indices[:,1], pixel_indices[:,0]) #test baseline
                     filter_data_by_eme_and_ground_arr = np.where(eme_angles <= 89.5, True, False)
                     plt.scatter(pixel_indices[filter_data_by_eme_and_ground_arr,1], pixel_indices[filter_data_by_eme_and_ground_arr,0], marker= ".") #test baseline
 
-                    filter_data_by_eme_and_ground_arr = np.where(mask[pixel_indices[:,0], pixel_indices[:,1]] == True, True, False)
+                    # filter_data_by_eme_and_ground_arr = np.where(mask[pixel_indices[:,0], pixel_indices[:,1]] == True, True, False)
                     plt.scatter(pixel_indices[filter_data_by_eme_and_ground_arr,1], pixel_indices[filter_data_by_eme_and_ground_arr,0],marker="*") #test baseline
 
                     plt.show()
@@ -136,11 +134,16 @@ class sort_and_filter:
         print("Average is now", post_filtering_data_point_count / slant_count, "with min being", np.min(lists), "and max being", np.max(lists), "and std being", np.std(lists))
 
     def sort_and_filter_all(self):
+        force_write = (SETTINGS["processing"]["clear_cache"] or SETTINGS["processing"]["redo_data_sorting_and_filtering"])
+
+        if all([cub in os.listdir(self.save_dir) or cub == get_cumulative_filename("analysis_sub_path") for cub in os.listdir(self.data_dir)]) and os.path.exists(join_strings(self.save_dir, get_cumulative_filename("sorted_sub_path"))) and not force_write:
+            print("Data already sorted")
+            return
         data = self.get_processed_data()
         # for cube_name, cube_data in data.items():
-        force_write = (SETTINGS["processing"]["clear_cache"] or SETTINGS["processing"]["redo_data_sorting_and_filtering"])
         appended_data = False
         cube_count = len(data)
+
         self.start_time = time.time()
         for index, (cube_name, cube_data) in enumerate(data.items()):        
             if os.path.exists(join_strings(self.save_dir, cube_name + ".pkl")) and not force_write:
@@ -161,6 +164,9 @@ class sort_and_filter:
             print("Sorted data already exists, but new data has been appended")
             check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("sorted_sub_path")), data = data, save=True, force_write=True)
         elif force_write:
+            check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("sorted_sub_path")), data = data, save=True, force_write=True)
+        elif not os.path.exists(join_strings(self.save_dir, get_cumulative_filename("sorted_sub_path"))):
+            print("Sorted data does not exist. Creating...")
             check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("sorted_sub_path")), data = data, save=True, force_write=True)
         else:
             print("Sorted not changed since last run. No changes to save...")

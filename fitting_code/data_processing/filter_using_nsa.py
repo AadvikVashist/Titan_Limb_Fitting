@@ -184,11 +184,16 @@ class process_nsa_data_for_fitting:
 
 
     def select_nsa_data_in_all(self, emission_cutoff = 0, nsa_data : bool = False):
+        force_write = (SETTINGS["processing"]["clear_cache"] or SETTINGS["processing"]["redo_data_sorting_and_filtering"])
+
+        if all([cub in os.listdir(self.save_dir) or cub == get_cumulative_filename("sorted_sub_path") for cub in os.listdir(self.data_dir)]) and os.path.exists(join_strings(self.save_dir, get_cumulative_filename("nsa_filtered_out_sub_path"))) and not force_write:
+            print("Data already filtered. Skipping...")
+            return
+
         raw_data = self.get_sorted_data()
         if nsa_data == True:
             nsa_data = self.get_nsa_data()
         # for cube_name, cube_data in data.items():
-        force_write = (SETTINGS["processing"]["clear_cache"] or SETTINGS["processing"]["redo_nsa_geo_filtering"])
         appended_data = False
         cube_count = len(raw_data)
         self.start_time = time.time()
@@ -217,6 +222,9 @@ class process_nsa_data_for_fitting:
             check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("nsa_filtered_out_sub_path")), data = raw_data, save=True, force_write=True)
         elif force_write:
             check_if_exists_or_write(join_strings(self.save_dir,get_cumulative_filename("nsa_filtered_out_sub_path")), data = raw_data, save=True, force_write=True)
+        elif not os.path.exists(join_strings(self.save_dir, get_cumulative_filename("nsa_filtered_out_sub_path"))):
+            print("NSA data not found. Saving...")
+            check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("nsa_filtered_out_sub_path")), data = raw_data, save=True, force_write=True)
         else:
             print("NSA data not changed since last run. No changes to save...")
         self.get_stats(raw_data)

@@ -15,10 +15,9 @@ def gen_all_plots(devEnvironment: bool = True, multi_process: Union[bool,int] = 
     plots = gen_u1_u2_figures(devEnvironment=devEnvironment)
     plots.gen_u_vs_time(multi_process=multi_process)
     plots.u1_u2_all_figures(multi_process=multi_process)
-    misc = gen_plots(devEnvironment=devEnvironment)
     
+    # misc = gen_plots(devEnvironment=devEnvironment)
+    # misc.gen_image_overlay(cube_name="C1477437155_1", band=118)
     
-    misc.gen_image_overlay(cube_name="C1477437155_1", band=118)
-
-    preview = generate_cube_previews(devEnvironment=devEnvironment)
-    preview.enumerate_all(multi_process=multi_process)
+    # preview = generate_cube_previews(devEnvironment=devEnvironment)
+    # preview.enumerate_all(multi_process=multi_process)

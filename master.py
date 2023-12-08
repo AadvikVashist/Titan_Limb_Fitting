@@ -1,7 +1,6 @@
 
 
 from fitting_code.ingestion import main as ingestion
-
 from fitting_code.data_processing import main as data_processing
 
 from fitting_code.plot_generation import main as plot_generation
@@ -16,14 +15,12 @@ from fitting_code.paper_generation import main as paper_generation
     
 if __name__ == '__main__':
     # ingestion.ingest_all()
-    # data_processing.run_all_limb_processing(multiprocess=3, emission_cutoff=25)
-    # data_processing.process_nsa_data()
-    
-    paper_generation.all_paper_gens()
-    
+    # data_processing.run_all_limb_processing(multiprocess=True, emission_cutoff=25)
+    # data_processing.process_nsa_data()    
     
     global_analysis.derive_all_trends()
-    plot_generation.gen_all_plots(devEnvironment=False, multi_process=3)
+    
+    plot_generation.gen_all_plots(devEnvironment=True)
     
     
     # global_analysis.gen_all_plots(devEnvironment=False, multi_process=3)

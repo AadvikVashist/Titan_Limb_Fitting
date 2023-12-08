@@ -9,32 +9,63 @@ from .filter_using_nsa import process_nsa_data_for_fitting
 from .fitting import fit_data
 from .selective_analysis import select_data
 from typing import Union
+import shutil
 
+def string_fill(string: str, fill_char: str = "-", split_char: str = "> "):
+    split_spaces = len(split_char) - 1
+    split_char = split_char.strip()
+    if split_char == ">":
+        split_left = ">"
+        split_right = "<"
+    elif split_char == "<":
+        split_left = "<"
+        split_right = ">"
+    elif split_char == "-":
+        split_left = "-"
+        split_right = "-"
+    elif split_char == "|":
+        split_left = "|"
+        split_right = "|"
+    elif split_char == "(":
+        split_left = "("
+        split_right = ")"
+    elif split_char == ")":
+        split_left = ")"
+        split_right = "("
+    else:
+        split_left = split_char
+        split_right = split_char
+    split_left = split_left + split_spaces * " "
+    split_right = split_spaces * " " + split_right
+    
+    leng = len(string)
+    space_avail = (shutil.get_terminal_size().columns - leng)
+    lr_leng = int(space_avail / 2) - len(split_left)
+    space_avail = space_avail % 2 
+    print(fill_char * lr_leng + split_left + string + split_right + fill_char * (lr_leng + space_avail))
 def process_nsa_data():
-    print("Starting to analyze north south asymmetry data\n\n")
+    string_fill("ANALYZE NSA DATA")
     analyze = insert_nsa()
     analyze.insert_nsa_data_in_all()
     
 def run_all_limb_processing(multiprocess: Union[bool, int] = False, emission_cutoff: int = 25):
-    
-    print("Starting to analyze dataset data\n\n")
+    string_fill("FITTING POLAR PROFILE")
     analyze = analyze_complete_dataset()
     analyze.complete_dataset_analysis(multiprocess)
 
-    print("Starting to sort and filter data\n\n")
+    string_fill("SORT AND FILTER 1")
     filter = sort_and_filter()
     filter.sort_and_filter_all()
     
-    print("Starting to remove nsa data\n\n")
+    string_fill("FILTER USING NSA")
     apply_nsa = process_nsa_data_for_fitting()
     apply_nsa.select_nsa_data_in_all(emission_cutoff=emission_cutoff)
     
-    print("Starting to fit data\n\n")
+    string_fill("FITTING DATA")
     fit = fit_data()
     fit.fit_all("all", multi_process=multiprocess)
 
-    print("Starting to select data\n\n")
+    string_fill("SELECTING FITS")
     fit = select_data()
-    fit.check_stats()
     fit.run_selection_on_all()
-    
+    string_fill("ALL DATA PROCESSED")

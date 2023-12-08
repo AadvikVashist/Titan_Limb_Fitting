@@ -269,16 +269,22 @@ class gen_u1_u2_figures:
             data = self.selected_data
 
 
-        if multi_process == True or multi_process >= 1:
-            args =[]
-        
-        if multi_process == True:
-            multi_process_core_count = 3 # default val
-        elif type(multi_process) == int:
-            multi_process_core_count = multi_process
-        if multi_process_core_count == 1:
-            multi_process = False
-
+        if type(multi_process) == int:
+            if multi_process == 1:
+                multi_process = False
+                multi_process_core_count = 1
+            else:
+                multi_process_core_count = multi_process
+                multi_process = True
+                args = []
+        elif type(multi_process) == bool:
+            if multi_process == True:
+                multi_process_core_count = 3
+                args =[]
+            else:
+                multi_process_core_count = 1
+        else:
+            raise ValueError("multiprocess is wrong, type needs to be bool or int")
 
         force_write = self.cache or SETTINGS["processing"]["redo_u_vs_wavelength_figure_generation"]
         for index, (cube_name, cube_data) in enumerate(data.items()):
@@ -610,15 +616,22 @@ class gen_u1_u2_figures:
             else:
                 self.u_vs_time(data, band, force_write)
                 
-        if multi_process == True or multi_process >= 1:
-            args =[]
-        
-        if multi_process == True:
-            multi_process_core_count = 3 # default val
-        elif type(multi_process) == int:
-            multi_process_core_count = multi_process
-        if multi_process_core_count == 1:
-            multi_process = False
+        if type(multi_process) == int:
+            if multi_process == 1:
+                multi_process = False
+                multi_process_core_count = 1
+            else:
+                multi_process_core_count = multi_process
+                multi_process = True
+                args = []
+        elif type(multi_process) == bool:
+            if multi_process == True:
+                multi_process_core_count = 3
+                args =[]
+            else:
+                multi_process_core_count = 1
+        else:
+            raise ValueError("multiprocess is wrong, type needs to be bool or int")
 
 
         if multi_process:

@@ -23,6 +23,34 @@ def triangle_wave(x, amplitude, frequency, phase, offset):
     return amplitude * np.abs(np.mod(x / (360 / frequency) + phase, 1) - 0.5) * 4 - amplitude + offset
 
 
+def find_closest_distance_to_edges(circle_mask, band):
+    # Check if the mask is empty or does not contain any True value
+    if not circle_mask.any():
+        return None
+
+    # Identify the rows and columns indices of the True values
+    rows, _ = np.where(circle_mask)
+
+    # Calculate distances to top and bottom edges
+    top_distances = []
+    bottom_distances = []
+    for r in rows:
+        top_distance = r  # Distance to the top edge
+        bottom_distance = circle_mask.shape[0] - r - 1  # Distance to the bottom edge
+
+        # Add the minimum distance for this point
+        top_distances.append(top_distance)
+        bottom_distances.append(bottom_distance)
+    if band == 1:
+        print(min(top_distances) + min(bottom_distances))
+    # if band < 2:
+    #     plt.title(min(distances))
+    #     plt.imshow(circle_mask)
+    #     plt.show()
+    # Return the minimum distance among all points
+    return min(top_distances) + min(bottom_distances)
+
+
 
 # def take_surface_measurements_and_get_surface(measurements):
 #     surface = np.mean(measurements,axis = 1)
@@ -62,10 +90,15 @@ def destripe_VIMS_V(cube, band, save = False, actual_surface = None):
     #                         np.ones((3, 3), np.uint8), iterations=3)
         
     now_time = time.time(); dicts["actual surface"] = now_time - start_time; start_time = now_time
-
+    img_size = np.mean(img.shape) 
+    iterations = np.round(img_size / 15).astype(int)
     actual_surface = cv2.dilate(surface.astype(np.uint8),
-                        np.ones((3, 3), np.uint8), iterations=4)
+                        np.ones((3, 3), np.uint8), iterations=iterations)
     now_time = time.time(); dicts["dilate"] = now_time - start_time; start_time = now_time
+    
+    min_dist = find_closest_distance_to_edges(actual_surface, band)
+    if min_dist < 4:
+        return cube_band
     col_no_surface = np.where(actual_surface, np.nan, cube_band)
 
     col_avg = []
@@ -119,9 +152,9 @@ def destripe_VIMS_V(cube, band, save = False, actual_surface = None):
         
         axs[1,1].imshow(cv2.GaussianBlur(img, (5, 5), 0))
 
-        axs[0,2].plot(np.arange(len(col_avg)), col_avg)
-        axs[0,2].plot(np.arange(len(col_avg)), col_avg_pchip)
-        axs[0,2].legend(["original", "pchip"])
+        axs[0,2].plot(np.arange(len(col_avg)), col_avg, label = "original")
+        axs[0,2].plot(np.arange(len(col_avg)), col_avg_pchip, label = "pchip")
+        axs[0,2].legend()
         
         axs[1,0].imshow(cube_band, cmap = "gray")
         axs[1,2].imshow(destriped, cmap = "gray")
@@ -231,8 +264,7 @@ class polar_profile:
         return center, center_point, lowest_index_2d, lowest_indexes_2d
 
     def calculate_location_of_lowest_inc(self, cube):
-        lowest_inc, lowest_inc_point, lowest_index_2d, lowest_indexes_2d = self.get_lowest(
-            cube.inc)
+        lowest_inc, lowest_inc_point, lowest_index_2d, lowest_indexes_2d = self.get_lowest(cube.inc)
         if self.figures["incidence_heatmap"]:
             fig = plt.figure(self.figure_keys["incidence_heatmap"])
             plt.imshow(cube.inc)
@@ -558,14 +590,18 @@ class complete_cube:
             for x in range(cube.lat.shape[1]):
                 # if cube.ground[y, x] == True:
                 #     continue
-                brightnesses.append(cube.lat[y, x])
+                brightnesses.append(cube.lat[y, x]) # brightness value
                 angles.append(
-                    int(np.degrees(np.arctan2(x - center_point[1], center_point[0] - y))))
-        actual_angles = np.array(sorted(set(angles)))
-        br = [np.mean([brightnesses[index]for index, a in enumerate(
-            angles) if a == angle]) for angle in actual_angles]
-        min_angle = []
-        max_angle = []
+                    int(np.degrees(np.arctan2(x - center_point[1], center_point[0] - y)))) # angle relative to center
+        
+        actual_angles = np.array(sorted(set(angles))) #angle integers
+        br_per_int_angle = [([brightnesses[index] for index, a in enumerate(
+            angles) if a == angle]) for angle in actual_angles] #brightness values for each angle
+        for index, br in enumerate(br_per_int_angle):
+            br_per_int_angle[index] = br[np.argmax(np.abs(br))]
+
+        selected_minimums = []
+        selected_maximums = []
 
         initial_amplitude = 90  # Since values range from -90 to 90
         initial_frequency = 1  # One cycle per 360 degrees
@@ -573,62 +609,74 @@ class complete_cube:
         initial_offset = 0  # Initial offset
 
         # Adjust bounds as needed
-        param_bounds = ([0, 0, -np.inf, -np.inf], [90, 10, np.inf, np.inf])
+        param_bounds = ([0, 0, -360, -180], [100, 10, 360, 180])
 
         initial_guess = [initial_amplitude,
-                         initial_frequency, initial_phase, initial_offset]
+                        initial_frequency, initial_phase, initial_offset]
         fitted = False
-        try:
-            # Use curve_fit to fit the triangle wave function to your data
-            params, covariance = curve_fit(
-                triangle_wave, actual_angles, gaussian_filter(br,sigma = 3), p0=initial_guess, bounds=param_bounds)
-            lin_angles = np.linspace(0, 360, 3600)
+        # try:
+        #     # Use curve_fit to fit the triangle wave function to your data
+        #     params, covariance = curve_fit(
+        #         triangle_wave, actual_angles, gaussian_filter(br_per_int_angle,sigma = 3), p0=initial_guess, bounds=param_bounds)
+        #     lin_angles = np.linspace(0, 360, 3600)
             
-            diffs = triangle_wave(actual_angles, *params) - br
-            if np.std(diffs) > 0.15*np.std(br):
-                print(np.std(diffs) , np.std(br))
-                raise ValueError
+        #     diffs = triangle_wave(actual_angles, *params) - br_per_int_angle
+        #     if np.std(diffs) > 0.15*np.std(br_per_int_angle):
+        #         print(np.std(diffs) , np.std(br_per_int_angle))
+        #         raise ValueError
         
-            values_from_fit = triangle_wave(lin_angles, *params)
-            sorted_values = np.argsort(values_from_fit)
-            min_angle = lin_angles[sorted_values[0]]
-            max_angle = lin_angles[sorted_values[-1]]
-            fitted = True
-        except:
-            print("failed to fit triangle wave")
+        #     values_from_fit = triangle_wave(lin_angles, *params)
+        #     sorted_values = np.argsort(values_from_fit)
+        #     min_angle = lin_angles[sorted_values[0]]
+        #     max_angle = lin_angles[sorted_values[-1]]
+        #     fitted = True
+        # except:
+            # print("failed to fit triangle wave")
             # plt.scatter(angles, brightnesses)
             # plt.scatter(actual_angles, br)
             # plt.scatter(actual_angles, gaussian_filter(br, sigma=3))
             # plt.pause(3)
-            sorted_values = np.argsort(brightnesses)
-            angles = np.array(angles)
-            min_angle = np.concatenate((angles[sorted_values[0:4]], angles[sorted_values[0:4]], angles[sorted_values[4:8]]))
-            if np.std(min_angle) > 20:
-                min_angle = [m+360 if m < 0 else m for m in min_angle]
-            min_angle =np.mean(min_angle)
-            max_angle = np.concatenate((angles[sorted_values[-4::]],angles[sorted_values[-4::]], angles[sorted_values[-8:-4]]))
-            if np.std(max_angle) > 20:
-                max_angle = [m+360 if m < 0 else m for m in max_angle]
-            max_angle =np.mean(max_angle)
+        sorted_values = np.argsort(br_per_int_angle)
+        actual_angles = np.array(actual_angles)
 
+        selected_minimums = actual_angles[sorted_values[0:20]]
+        if np.std(selected_minimums) > 10:
+            selected_minimums = [m+360 if m < 0 else m for m in selected_minimums]
+                        
+        min_angle =np.mean(selected_minimums)
+        
+        selected_maximums = actual_angles[sorted_values[-20::]]
+        if np.std(selected_maximums) > 10:
+            selected_maximums = [m+360 if m < 0 else m for m in selected_maximums]
+        max_angle =np.mean(selected_maximums)
+        
+        std_thresh = 10
+        weightage_north = np.count_nonzero(np.array(angles) > 0) / len(angles)
+        weightage_south = np.count_nonzero(np.array(angles) < 0) / len(angles)
+        
+        
         if min_angle < 0:
             min_angle += 360
         if max_angle < 0:
             max_angle += 360
         calculated_rots = np.array([min_angle, max_angle])
+        # if np.std(selected_minimums) > std_thresh and np.std(selected_maximums) > std_thresh:
+        #     raise ValueError
+
         if min_angle > max_angle:
-            rot_angle = np.mean([min_angle, max_angle]) - 90
+            rot_angle = min_angle * weightage_south + max_angle * weightage_north - 90
         else:
-            rot_angle = np.mean([min_angle, max_angle]) + 90
+            rot_angle = min_angle * weightage_south + max_angle * weightage_north + 90
+        
         if rot_angle > 180:
             rot_angle -= 360
-        fig, axs = plt.subplots(1, 3)
-        axs[0].scatter(angles, brightnesses)
-        axs[0].scatter(actual_angles, br)
-        axs[0].scatter(actual_angles, gaussian_filter(br, sigma=3))
-        if fitted:
-            axs[0].plot(actual_angles, triangle_wave(actual_angles, *params),
-                    'r', label="Fitted Triangle Wave")
+        fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+        axs[0].scatter(angles, brightnesses, label = "Original")
+        axs[0].scatter(actual_angles, br_per_int_angle, label = "Average")
+        axs[0].scatter(actual_angles, gaussian_filter(br_per_int_angle, sigma=3), label = "Gaussian Filter")
+        axs[0].vlines(rot_angle, np.min(br_per_int_angle), np.max(br_per_int_angle), label = "North", color = (0,0,0), linewidth = 2)
+        axs[0].vlines(rot_angle - 180, np.min(br_per_int_angle), np.max(br_per_int_angle), label = "South", color = (0,0,0), linestyle = "--", linewidth = 2)
+
         axs[0].legend()
         axs[1].imshow(cube.lat)
         try:
@@ -637,12 +685,18 @@ class complete_cube:
         except:
             axs[2].imshow(cube[118])
             plt.title("IR")
-        axs[1].plot([center_point[1], center_point[1] + np.sin(np.radians(rot_angle)) * 50],
-                    [center_point[0], center_point[0] - np.cos(np.radians(rot_angle)) * 50], c="r")
-        axs[2].plot([center_point[1], center_point[1] + np.sin(np.radians(rot_angle)) * 50],
-                    [center_point[0], center_point[0] - np.cos(np.radians(rot_angle)) * 50], c="r")
+        shs= cube.lat.shape[0]
+        axs[1].plot([center_point[1], center_point[1] + np.sin(np.radians(rot_angle)) * shs],
+                    [center_point[0], center_point[0] - np.cos(np.radians(rot_angle)) * shs], c="r")
+        axs[2].plot([center_point[1], center_point[1] + np.sin(np.radians(rot_angle)) * shs],
+                    [center_point[0], center_point[0] - np.cos(np.radians(rot_angle)) * shs], c="r")
+        axs[1].plot([center_point[1], center_point[1] - np.sin(np.radians(rot_angle)) * shs],
+                    [center_point[0], center_point[0] + np.cos(np.radians(rot_angle)) * shs], c=(0.5,0,0))
+        axs[2].plot([center_point[1], center_point[1] - np.sin(np.radians(rot_angle)) * shs],
+                    [center_point[0], center_point[0] + np.cos(np.radians(rot_angle)) * shs], c=(0.5,0,0))
         if not os.path.exists(join_strings(SETTINGS["paths"]["parent_figures_path"], SETTINGS["paths"]["dev_figures_sub_path"], "polar_cache/north/")):
             os.makedirs(join_strings(SETTINGS["paths"]["parent_figures_path"], SETTINGS["paths"]["dev_figures_sub_path"], "polar_cache/north/"))
+        # plt.show()
         plt.savefig(join_strings(SETTINGS["paths"]["parent_figures_path"], SETTINGS["paths"]["dev_figures_sub_path"], "polar_cache/north/" + cube.fname.split(".")[0]+".png"), dpi = 300)
         plt.close()
         return rot_angle, distance_array, center_of_cube, center_point
@@ -787,20 +841,34 @@ class analyze_complete_dataset:
         force_write = (SETTINGS["processing"]["clear_cache"]
                        or SETTINGS["processing"]["redo_polar_profile_calculations"])
         appended_data = False
-        if multi_process == True or multi_process >= 1:
-            args =[]
-        if multi_process == True:
-            multi_process_core_count = 3
-        elif type(multi_process) == int:
-            multi_process_core_count = multi_process
-        if multi_process_core_count == 1:
-            multi_process = False
+        
+        
+        if type(multi_process) == int:
+            if multi_process == 1:
+                multi_process = False
+                multi_process_core_count = 1
+            else:
+                multi_process_core_count = multi_process
+                multi_process = True
+                args = []
+        elif type(multi_process) == bool:
+            if multi_process == True:
+                multi_process_core_count = 3
+                args =[]
+            else:
+                multi_process_core_count = 1
+        else:
+            raise ValueError("multiprocess is wrong, type needs to be bool or int")
             
+        fit_cube = join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["analysis_sub_path"])
+        if all([cub + ".pkl" in os.listdir(fit_cube) for cub in self.cubes]) and os.path.exists(join_strings(fit_cube, get_cumulative_filename("analysis_sub_path"))) and  not force_write:
+            print("Polar profiles already calculated")
+            return
+        
         self.all_start_time = time.time()
         leng = len(self.cubes)
         for index, cub in enumerate(self.cubes):
-            fit_cube = join_strings(
-                SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["analysis_sub_path"])
+
             if not os.path.exists(fit_cube):
                 os.makedirs(fit_cube)
             if cub + ".pkl" in os.listdir(fit_cube) and not force_write:
@@ -823,4 +891,4 @@ class analyze_complete_dataset:
             for cub, data in results:
                 self.all_data[cub] = data
             
-        check_if_exists_or_write(get_cumulative_filename("analysis_sub_path"),join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["analysis_sub_path"]), save=True, data=self.all_data, force_write=force_write or appended_data or not os.path.exists(join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["analysis_sub_path"],get_cumulative_filename("analysis_sub_path"))), verbose=True)
+            check_if_exists_or_write(get_cumulative_filename("analysis_sub_path"),join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["analysis_sub_path"]), save=True, data=self.all_data, force_write=force_write or appended_data or not os.path.exists(join_strings(SETTINGS["paths"]["parent_data_path"], SETTINGS["paths"]["analysis_sub_path"],get_cumulative_filename("analysis_sub_path"))), verbose=True)

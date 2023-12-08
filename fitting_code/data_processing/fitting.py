@@ -350,7 +350,7 @@ class fit_data:
         print()
         return data
 
-    def multi_process_func(self, cube_data, index, cube_name, save_on_end: dict = None):
+    def multi_process_func(self, cube_data, index, cube_name):
         self.ret_data[cube_name] = self.fit(cube_data, cube_name)
         check_if_exists_or_write(join_strings(self.save_dir, cube_name + ".pkl"), data=self.ret_data[cube_name], save=True, force_write=True)
         time_spent = np.around(time.time() - self.start_time, 3)
@@ -358,17 +358,7 @@ class fit_data:
         total_time_left = time_spent / percentage_completed - time_spent
         print("Cube", index + 1,"of", self.cube_count , "| Total time for cube:", np.around(time_spent, 1), "seconds | Total Expected time left:",
                 np.around(total_time_left,2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time,1), "seconds                       ")        
-        if save_on_end is not None:
-            self.save_cumulative(force_write=save_on_end["force_write"], appended_data=save_on_end["appended_data"])
-    def save_cumulative(self, force_write: bool = False, appended_data: bool = True):
 
-        if (os.path.exists(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path"))) and appended_data):
-            print("Fitted data already exists, but new data has been appended")
-            check_if_exists_or_write(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path")), data = self.ret_data, save=True, force_write=True)
-        elif force_write:
-            check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("fitted_sub_path")), data = self.ret_data, save=True, force_write=True)
-        else:
-            print("Fitted not changed since last run. No changes to save...")    
     def fit_some(self, start: int = 0, step: int = 3, fit_types: str = "all", multi_process: bool = False):
         self.data = self.get_filtered_data()
         force_write = (SETTINGS["processing"]["clear_cache"]
@@ -404,25 +394,35 @@ class fit_data:
                 pool.starmap(self.multi_process_func, args)
                 pool.close()
                 pool.join()  # This line ensures that all processes are done
-        self.save_cumulative(force_write=force_write, appended_data=appended_data)
 
             
     def fit_all(self, fit_types: str = "all", multi_process: Union[bool,int] = False):
+        force_write = (SETTINGS["processing"]["clear_cache"] or SETTINGS["processing"]["redo_fitting"])
+        if all([cub in os.listdir(self.save_dir) or cub == get_cumulative_filename("nsa_filtered_out_sub_path") for cub in os.listdir(self.data_dir)]) and os.path.exists(join_strings(self.save_dir, get_cumulative_filename("fitted_sub_path"))) and not force_write:
+            print("Data already fitted. Skipping...")
+            return
+        
         self.data = self.get_filtered_data()
-        force_write = (SETTINGS["processing"]["clear_cache"]
-                       or SETTINGS["processing"]["redo_fitting"])
         appended_data = True
         self.cube_count = len(self.data)
         self.start_time = time.time()
         self.fit_types = fit_types
-        if multi_process == True or multi_process >= 1:
-            args =[]
-        if multi_process == True:
-            multi_process_core_count = 3
-        elif type(multi_process) == int:
-            multi_process_core_count = multi_process
-        if multi_process_core_count == 1:
-            multi_process = False
+        if type(multi_process) == int:
+            if multi_process == 1:
+                multi_process = False
+                multi_process_core_count = 1
+            else:
+                multi_process_core_count = multi_process
+                multi_process = True
+                args = []
+        elif type(multi_process) == bool:
+            if multi_process == True:
+                multi_process_core_count = 3
+                args =[]
+            else:
+                multi_process_core_count = 1
+        else:
+            raise ValueError("multiprocess is wrong, type needs to be bool or int")
         self.ret_data = {}
         for index, (cube_name, cube_data) in enumerate(self.data.items()):
             if os.path.exists(join_strings(self.save_dir, cube_name + ".pkl")) and not force_write:
@@ -446,4 +446,10 @@ class fit_data:
                 pool.starmap(self.multi_process_func, args)
                 pool.close()
                 pool.join()  # This line ensures that all processes are done
-        self.save_cumulative(force_write=force_write, appended_data=appended_data)
+        if (os.path.exists(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path"))) and appended_data):
+            print("Fitted data already exists, but new data has been appended")
+            check_if_exists_or_write(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path")), data = self.ret_data, save=True, force_write=True)
+        elif force_write or not os.path.exists(join_strings(self.save_dir,get_cumulative_filename("fitted_sub_path"))):
+            check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("fitted_sub_path")), data = self.ret_data, save=True, force_write=True)
+        else:
+            print("Fitted not changed since last run. No changes to save...")    

@@ -22,6 +22,7 @@
 		"nsa_filtered_out_sub_path": "nsa_filtered_out",
 		"fitted_sub_path": "fitted",
 		"selected_sub_path": "selected_fits",
+		"global_sub_path": "global_fits",
 		"cumulative_path": "cumulative_",
 
 		"prod_figures_sub_path": "figures/prod",
@@ -36,7 +37,8 @@
 			"u_vs_wavelength" : "u_vs_wavelength",
 			"u_vs_time_per_wavelength" : "u_vs_time_per_wavelength",
 			"u_vs_wavelength_all_cubes" : "u_vs_wavelength_all_cubes",
-			"transitional_period" : "transitional_period"
+			"transitional_period" : "transitional_period",
+			"trust_map" : "trust_mapping"
 
 		}
 		
@@ -48,12 +50,13 @@
 		"redo_nsa_geo_filtering" : false,
 		"redo_fitting": false,
 		"redo_selection": false,
+		"redo_global_fitting": true,
 
 		"redo_preview_figures_generation": false,
 		"redo_quad_figure_generation": false,
-		"redo_u_vs_wavelength_figure_generation" : true,
-		"redo_u_vs_time_per_wavelength_figure_generation" : true,
-		"redo_u_vs_wavelength_all_cubes_figure_generation" : true,
+		"redo_u_vs_wavelength_figure_generation" : false,
+		"redo_u_vs_time_per_wavelength_figure_generation" : false,
+		"redo_u_vs_wavelength_all_cubes_figure_generation" : false,
 		"clear_cache": false
 	},
 	"figure_generation": {

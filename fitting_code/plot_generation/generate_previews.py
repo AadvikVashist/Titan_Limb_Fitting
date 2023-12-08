@@ -192,15 +192,22 @@ class generate_cube_previews:
                        or SETTINGS["processing"]["redo_preview_figures_generation"])
         self.cube_count = len(data)
         self.start_time = time.time()
-        if multi_process == True or multi_process >= 1:
-            args =[]
-        
-        if multi_process == True:
-            multi_process_core_count = 3 # default val
-        elif type(multi_process) == int:
-            multi_process_core_count = multi_process
-        if multi_process_core_count == 1:
-            multi_process = False
+        if type(multi_process) == int:
+            if multi_process == 1:
+                multi_process = False
+                multi_process_core_count = 1
+            else:
+                multi_process_core_count = multi_process
+                multi_process = True
+                args = []
+        elif type(multi_process) == bool:
+            if multi_process == True:
+                multi_process_core_count = 3
+                args =[]
+            else:
+                multi_process_core_count = 1
+        else:
+            raise ValueError("multiprocess is wrong, type needs to be bool or int")
         
         for index, (cube_name, cube_data) in enumerate(data.items()):
 

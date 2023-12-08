@@ -201,9 +201,14 @@ class select_data:
                         count+=1
         print(count, total, count/total)
     def run_selection_on_all(self, fit_types: str = "all"):
-        data = self.get_fitted_data()
         force_write = (SETTINGS["processing"]["clear_cache"]
                        or SETTINGS["processing"]["redo_selection"])
+        if all([cub in os.listdir(self.save_dir) or cub == get_cumulative_filename("fitted_sub_path") for cub in os.listdir(self.data_dir)]) and os.path.exists(join_strings(self.save_dir, get_cumulative_filename("selected_sub_path"))) and not force_write:
+            print("Data already selected. Skipping...")
+            return
+        
+        data = self.get_fitted_data()
+
         appended_data = False
         cube_count = len(data)
         self.start_time = time.time()
@@ -233,11 +238,16 @@ class select_data:
             print("Cube", index + 1, "of", cube_count, "| Total time for cube:", time_spent, "seconds | Total Expected time left:",
                   np.around(total_time_left, 2), "seconds", "| Total time spent:", np.around(time.time() - self.start_time, 3), "seconds")
         if (os.path.exists(join_strings(self.save_dir, get_cumulative_filename("selected_sub_path"))) and appended_data):
-            print("Fitted data already exists, but new data has been appended")
+            print("Selected data already exists, but new data has been appended")
             check_if_exists_or_write(join_strings(
                 self.save_dir, get_cumulative_filename("selected_sub_path")), data=data, save=True, force_write=True)
         elif force_write:
             check_if_exists_or_write(join_strings(
                 self.save_dir, get_cumulative_filename("selected_sub_path")), data=data, save=True, force_write=True)
+        elif not os.path.exists(join_strings(self.save_dir, get_cumulative_filename("selected_sub_path"))):
+            print("Selected data does not exist. Creating...")
+            check_if_exists_or_write(join_strings(
+                self.save_dir, get_cumulative_filename("selected_sub_path")), data=data, save=True, force_write=True)
         else:
-            print("Fitted not changed since last run. No changes to save...")
+            print("Selected data not changed since last run. No changes to save...")
+        self.check_stats()

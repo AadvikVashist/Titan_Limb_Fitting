@@ -57,9 +57,14 @@ class insert_nsa:
         # print("Finished nsa calculations", wave_band, "| Spent", np.around(time.time() - self.cube_start_time, 3), "| expected time left:", np.around((time.time() - self.cube_start_time) * (leng - index - 1),2), end="\r")
         return nsa_ret
     def insert_nsa_data_in_all(self):
+        force_write = (SETTINGS["processing"]["clear_cache"] or SETTINGS["processing"]["redo_nsa_calculations"])
+        
+        if all([cub in os.listdir(self.save_dir) or cub == get_cumulative_filename("sorted_sub_path") for cub in os.listdir(self.data_dir)]) and os.path.exists(join_strings(self.save_dir, get_cumulative_filename("nsa_data_sub_path"))) and not force_write:
+            print("Data already sorted")
+            return
+
         data = self.get_cube_data()
         # for cube_name, cube_data in data.items():
-        force_write = (SETTINGS["processing"]["clear_cache"] or SETTINGS["processing"]["redo_nsa_calculations"])
         appended_data = False
         cube_count = len(data)
         self.start_time = time.time()
@@ -86,6 +91,9 @@ class insert_nsa:
             print("NSA data already exists, but new data has been appended")
             check_if_exists_or_write(join_strings(self.save_dir,get_cumulative_filename("nsa_data_sub_path")), data = data, save=True, force_write=True)
         elif force_write:
+            check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("nsa_data_sub_path")), data = data, save=True, force_write=True)
+        elif not os.path.exists(join_strings(self.save_dir, get_cumulative_filename("nsa_data_sub_path"))):
+            print("NSA data not found. Creating new file...")
             check_if_exists_or_write(join_strings(self.save_dir, get_cumulative_filename("nsa_data_sub_path")), data = data, save=True, force_write=True)
         else:
             print("NSA data not changed since last run. No changes to save...")
