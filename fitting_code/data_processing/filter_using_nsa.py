@@ -74,11 +74,14 @@ class process_nsa_data_for_fitting:
     def process_nsa(self, data : dict, cube_root: str, cube: str = None, force=False, nsa_data = None, emission_cutoff = 0):
         
         leng = len(data)
-        thresh = 0.5
+        thresh = 4
+
         if emission_cutoff == 0 and nsa_data is None:
             raise SyntaxError("Either emission_cutoff or nsa_data must be provided")
         elif nsa_data is not None:
             nsa_latitude = nsa_data["nsa_latitude"]
+            nsa_min = np.min(nsa_latitude, 0) - thresh
+            nsa_max = np.max(nsa_latitude, 0) + thresh
 
         ind_shift = 0
         count = 0
@@ -110,7 +113,7 @@ class process_nsa_data_for_fitting:
                     slant_lats = [lat[indx[0], indx[1]] for indx in slant_data["pixel_indices"]]
                     min_slant = np.min(slant_lats)
                     max_slant = np.max(slant_lats)
-                    if nsa_latitude + thresh < min_slant or nsa_latitude - thresh > max_slant: #not in range
+                    if nsa_max < min_slant or nsa_min > max_slant: #not in range
                         indices_mask = np.array([True for emission_angle in emission])
                         data[wave_band][slant]["meta"]["processing"]["nsa_filter"] = None
                         continue
@@ -118,7 +121,7 @@ class process_nsa_data_for_fitting:
                         indices_mask = np.array([True for emission_angle in emission])
                         data[wave_band][slant]["meta"]["processing"]["nsa_filter"] = None
                         continue
-                    indices_mask = (slant_lats > np.max((nsa_latitude, lat_of_center))) | (slant_lats < np.min((nsa_latitude, lat_of_center)))
+                    indices_mask = (slant_lats > nsa_max | slant_lats < nsa_min)
                     indices_mask = self.try_to_remove_outliers(indices_mask)
                     data[wave_band][slant]["meta"]["processing"]["nsa_filter"] = True
                     # if index > 62:
@@ -127,11 +130,12 @@ class process_nsa_data_for_fitting:
                     #     plt.scatter(pixel_indices[:,1], pixel_indices[:,0], label=slant_angle)
                     #     plt.scatter(pixel_indices[indices_mask,1], pixel_indices[indices_mask,0], label=slant_angle)
                     #     plt.show()
-                if emission_cutoff != 0 and nsa_data is None:
+                
+                if emission_cutoff != 0 and nsa_data is None: #if nsa_data is not None then we already did this
                     indices_mask = np.array([emission_angle > emission_cutoff for emission_angle in emission])
                     data[wave_band][slant]["meta"]["processing"]["emission_filter"] = True
 
-                elif emission_cutoff == 0 and nsa_data is not None:
+                elif emission_cutoff == 0 and nsa_data is not None: #building off of nsa data
                     indices_mask = np.where(emission > emission_cutoff, indices_mask, False)
                     data[wave_band][slant]["meta"]["processing"]["emission_filter"] = True
                 else: 

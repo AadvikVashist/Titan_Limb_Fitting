@@ -486,7 +486,7 @@ class gen_quad_plots:
             path = join_strings(self.dps_dir, "plots_" + cube_name + "_" + band_wave + ".png")
             fig.savefig(path, dpi=500)
             print("Saved to", path)
-            plt.close()
+            plt.close(fig)
             
     def quad_dps(self, cube_name_key: str = None):
         data = self.get_data()

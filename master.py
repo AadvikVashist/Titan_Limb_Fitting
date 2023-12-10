@@ -15,12 +15,12 @@ from fitting_code.paper_generation import main as paper_generation
     
 if __name__ == '__main__':
     # ingestion.ingest_all()
-    # data_processing.run_all_limb_processing(multiprocess=True, emission_cutoff=25)
+    data_processing.run_all_limb_processing(multiprocess=True, emission_cutoff=10, nsa=True)
     # data_processing.process_nsa_data()    
     
     global_analysis.derive_all_trends()
-    
-    plot_generation.gen_all_plots(devEnvironment=True)
+
+    # plot_generation.gen_all_plots(devEnvironment=True)
     
     
     # global_analysis.gen_all_plots(devEnvironment=False, multi_process=3)
@@ -30,5 +30,4 @@ if __name__ == '__main__':
     # detector = transition_wave(False)
     # detector.run_transitional_detector_all()
     
-    print("Generating previews\n\n")    
 

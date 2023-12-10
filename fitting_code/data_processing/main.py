@@ -48,7 +48,7 @@ def process_nsa_data():
     analyze = insert_nsa()
     analyze.insert_nsa_data_in_all()
     
-def run_all_limb_processing(multiprocess: Union[bool, int] = False, emission_cutoff: int = 25):
+def run_all_limb_processing(multiprocess: Union[bool, int] = False, emission_cutoff: int = 25, nsa: bool = False):
     string_fill("FITTING POLAR PROFILE")
     analyze = analyze_complete_dataset()
     analyze.complete_dataset_analysis(multiprocess)
@@ -59,7 +59,7 @@ def run_all_limb_processing(multiprocess: Union[bool, int] = False, emission_cut
     
     string_fill("FILTER USING NSA")
     apply_nsa = process_nsa_data_for_fitting()
-    apply_nsa.select_nsa_data_in_all(emission_cutoff=emission_cutoff)
+    apply_nsa.select_nsa_data_in_all(emission_cutoff=emission_cutoff, nsa=nsa)
     
     string_fill("FITTING DATA")
     fit = fit_data()

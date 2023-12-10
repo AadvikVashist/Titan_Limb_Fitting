@@ -32,6 +32,7 @@
 		"figure_file_types": [".png", ".svg", ".pkl"],
 		"figure_subpath": {
 			"preview" : "profile_previews", 
+			"cube_preview" : "simple_cube_previews",
 			"quadrant" : "quads",
 			"image_overlay" : "image_overlays",
 			"u_vs_wavelength" : "u_vs_wavelength",
@@ -54,6 +55,7 @@
 
 		"redo_preview_figures_generation": false,
 		"redo_quad_figure_generation": false,
+		"redo_simple_preview_figure_generation": false,
 		"redo_u_vs_wavelength_figure_generation" : false,
 		"redo_u_vs_time_per_wavelength_figure_generation" : false,
 		"redo_u_vs_wavelength_all_cubes_figure_generation" : false,
@@ -66,10 +68,10 @@
 			"original_image" : false,
 			"show_blur" : false, 
 			"show_projection": false,
-			"lon_cropped_proj": true,
+			"lon_cropped_proj": false,
 			"full_shifted_proj" : false,
 			"lon_cropped_shifted_proj" : false,
-			"lon_cropped_shifted_proj_gauss": false,
+			"lon_cropped_shifted_proj_gauss": true,
 			"global_nsa_and_scatter" : false,
 			"zeros_evaluated" : false,
 			"persist_figures" : true

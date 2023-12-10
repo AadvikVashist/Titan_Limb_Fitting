@@ -57,7 +57,7 @@ def find_closest_distance_to_edges(circle_mask, band):
 def destripe_VIMS_V(cube, band, save = False, actual_surface = None):
     start_time = time.time()
     dicts = {}
-    cube_band = cube[band]
+    cube_band = cube[int(band)]
     surface = cube.ground
     img = cube_band - np.min(cube_band)
     img = img / np.max(img) * 255
