@@ -28,7 +28,7 @@
 		"prod_figures_sub_path": "figures/prod",
 		"dev_figures_sub_path": "figures/dev",
 		"figure_path_format": "{figure_type}_{fig_name}_{index}_{cube_name}.png",
-		"figure_path_format_dev": "{figure_type}_{fig_name}_{cube_name}_{year}_{month}_{day}_{hour}_{minute}_{second}.png",
+		"figure_path_format_dev": "{figure_type}_{fig_name}_{cube_name}_{year}-{month}-{day}.png",
 		"figure_file_types": [".png", ".svg", ".pkl"],
 		"figure_subpath": {
 			"preview" : "profile_previews", 
@@ -40,7 +40,6 @@
 			"u_vs_wavelength_all_cubes" : "u_vs_wavelength_all_cubes",
 			"transitional_period" : "transitional_period",
 			"trust_map" : "trust_mapping"
-
 		}
 		
 	},

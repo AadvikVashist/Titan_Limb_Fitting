@@ -9,11 +9,11 @@ from fitting_code.plot_generation.save_bands import gen_image_bands
 from typing import Union
 
 def gen_all_plots(devEnvironment: bool = True, multi_process: Union[bool,int] = 3):
-    bands = gen_image_bands(devEnvironment=devEnvironment)
-    bands.gen_all(multi_process=multi_process)
+    # bands = gen_image_bands(devEnvironment=devEnvironment)
+    # bands.gen_all(multi_process=multi_process)
     
-    plots = gen_quad_plots(devEnvironment=devEnvironment)
-    plots.quad_all(multi_process=multi_process)
+    # plots = gen_quad_plots(devEnvironment=devEnvironment)
+    # plots.quad_all(multi_process=multi_process)
     
 
     

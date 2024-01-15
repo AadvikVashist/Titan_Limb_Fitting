@@ -74,8 +74,10 @@ class gen_u1_u2_figures:
         placeholders = re.findall(r"{(.*?)}", file_format)
         # Create a dictionary to hold variable names and their values
         a = locals()
-        file_formatted = '_'.join([str(a[placeholder])
-                                  for placeholder in placeholders])
+        in_betweens = [x[x.index("}")+1::] for x in file_format.split("{") if len(x) > 0]
+        paired_up = [str(a[placeholder])
+                                  for placeholder in placeholders]
+        file_formatted = "".join([val for pair in zip(paired_up, in_betweens) for val in pair if val])
         return join_strings(base_path, file_formatted)
 
     def emission_to_normalized(self, emission_angle):
@@ -257,8 +259,7 @@ class gen_u1_u2_figures:
         plt.tight_layout()
 
         # plt.show()
-        path = self.get_fig_path(
-            base_path, "u_vs_wave", "DPS_55", cube_name=cube_name) + ".png"
+        path = self.get_fig_path(base_path, "u_vs_wave", "",cube_name=cube_name)
         print("Saving figure to", path)
         fig.savefig(path, dpi=150)
         plt.close()
@@ -348,8 +349,7 @@ class gen_u1_u2_figures:
         # plt.rcParams['font.family'] = 'serif'
         band_wave = band_ind.split("_")[1] + "_" + band_ind.split("_")[0]
 
-        path = self.get_fig_path(
-            base_path, "u_vs_time_average", "DPS_55", cube_name=band_wave, ind_recog = False) + ".png"
+        path = self.get_fig_path(base_path, "u_vs_time_average", "", cube_name=band_wave, ind_recog = False)
         if os.path.exists(path) and not force_write:
             return
         for cube, cube_data in cubes.items():
@@ -434,12 +434,10 @@ class gen_u1_u2_figures:
         plt.legend(fontsize=10)
         plt.tight_layout()
 
-        # plt.show()
 
         print("Saving figure to", path)
-        plt.show()
-        fig.savefig(path, dpi=150)
         # plt.show()
+        fig.savefig(path, dpi=150)
         plt.close()
         
     def u_vs_time(self, cubes, band, force_write):
@@ -474,8 +472,7 @@ class gen_u1_u2_figures:
         plt.rcParams['font.family'] = 'serif'
         band_wave = band_ind.split("_")[1] + "_" + band_ind.split("_")[0]
 
-        path = self.get_fig_path(
-            base_path, "u_vs_time", "DPS_55", cube_name=band_wave, ind_recog = False) + ".png"
+        path = self.get_fig_path(base_path, "u_vs_time", "",cube_name=band_wave, ind_recog = False)
         if os.path.exists(path) and not force_write:
             return
         for cube, cube_data in cubes.items():
@@ -596,7 +593,6 @@ class gen_u1_u2_figures:
 
         print("Saving figure to", path)
         fig.savefig(path, dpi=150)
-        # plt.show()
         plt.close()
 
     def gen_u_vs_time(self, multi_process: Union[bool,int] = False, data=None):

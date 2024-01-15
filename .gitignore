@@ -11,3 +11,55 @@ __pycache__
 data/figures/prod/quads/
 data/figures/prod/profile_previews/
 figures/
+
+
+
+# General
+*.log
+*.aux
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+*.brf
+*.idx
+*.ilg
+*.ind
+*.loa
+*.nav
+*.snm
+*.vrb
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.slg
+*.slo
+*.sls
+*.run.xml
+*-blx.bib
+*.bcf
+*.dvi
+*.ps
+
+# Compiled PDF
+*.pdf
+
+# Backup files
+*~
+*.backup
+
+# Other formats
+*.xdv
+
+# TeX auxiliary directory (auto-folder by some TeX editors)
+_tex/
+
