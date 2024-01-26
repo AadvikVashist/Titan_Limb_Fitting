@@ -1,10 +1,10 @@
 {
     "paths": {
-        "parent_data_path": "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/data",
-        "parent_figures_path": "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/",
-		"parent_path" : "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/",	
+        "parent_data_path": "/Users/aadvik/Desktop/Work/Titan/Projects/Titan_Limb_Fitting/data",
+        "parent_figures_path": "/Users/aadvik/Desktop/Work/Titan/Projects/Titan_Limb_Fitting/",
+		"parent_path" : "/Users/aadvik/Desktop/Work/Titan/Projects/Titan_Limb_Fitting/",	
 		"latex" : {
-			"latex_path" : "/Users/aadvik/Desktop/NASA/Titan_Limb_Fitting/LaTex",
+			"latex_path" : "/Users/aadvik/Desktop/Work/Titan/Projects/Titan_Limb_Fitting/LaTex",
 			"table_path" : "generation/table.tex"
 		},
 

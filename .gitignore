@@ -1,6 +1,6 @@
 /.DS_Store
 *µm_*.pkl
-code/settings.json
+settings/settings.json
 cumulative*.pkl
 *.pyc
 *~
@@ -11,7 +11,6 @@ __pycache__
 data/figures/prod/quads/
 data/figures/prod/profile_previews/
 figures/
-
 
 
 # General
