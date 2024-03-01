@@ -8,6 +8,7 @@ from .sort_and_filter import sort_and_filter
 from .filter_using_nsa import process_nsa_data_for_fitting
 from .fitting import fit_data
 from .selective_analysis import select_data
+from .process_titan import analyze_srtc_data, run
 from typing import Union
 import shutil
 
@@ -69,3 +70,8 @@ def run_all_limb_processing(multiprocess: Union[bool, int] = False, emission_cut
     fit = select_data()
     fit.run_selection_on_all()
     string_fill("ALL DATA PROCESSED")
+
+def process_srtc_data():
+    string_fill("ANALYZE SRTC DATA")
+    # analyze_srtc_data()
+    run() 

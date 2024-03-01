@@ -146,11 +146,14 @@ class fit_data:
             return {"I_0": popt[0], "u": popt[1]}, pcov
         except Exception as e:
             return e, "error occured"
-    def run_quadratic_limb_darkening(self, normalized_distances, brightness_values):
+    def run_quadratic_limb_darkening(self, normalized_distances, brightness_values, weights = None):
         p0 = [1, 0.5, 0.5]
         param_bounds = [[0, -np.inf, -np.inf], [np.inf, np.inf, np.inf]]
         try:
-            popt, pcov = curve_fit(self.quadratic_limb_darkening, normalized_distances, brightness_values,full_output=False, p0=p0, bounds=param_bounds)
+            if weights is not None:
+                popt, pcov = curve_fit(self.quadratic_limb_darkening, normalized_distances, brightness_values,full_output=False, p0=p0, bounds=param_bounds, sigma=weights, absolute_sigma=False)
+            else:
+                popt, pcov = curve_fit(self.quadratic_limb_darkening, normalized_distances, brightness_values,full_output=False, p0=p0, bounds=param_bounds)
             return {"I_0": popt[0], "u1": popt[1], "u2": popt[2]}, pcov
         except Exception as e:
             return e, "error occured"
