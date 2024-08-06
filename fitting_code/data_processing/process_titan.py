@@ -20,8 +20,8 @@ from sklearn.inspection import PartialDependenceDisplay
 
 #get fit_data
 from .fitting import fit_data
-data_folder = join_strings(SETTINGS['paths']["parent_data_path"], "SRTC++/v1/")
-output_folder = join_strings(SETTINGS['paths']["parent_data_path"], "SRTC++/output/")
+data_folder = join_strings(SETTINGS['paths']["parent_data_path"], "SRTC++/v1+v2/")
+output_folder = join_strings(SETTINGS['paths']["parent_data_path"], "SRTC++/output")
 listdir = os.listdir(data_folder)
 fit_obj = fit_data()
 
@@ -70,7 +70,7 @@ def csv_to_data(file_name):
     bools = df.iloc[:, -1].tolist()
 
     return data, bools
-def show_images():
+def mask_background():
     combined_mask = 0
     total = 0
     for image in listdir:
@@ -82,17 +82,59 @@ def show_images():
             mask = cv2.imread(join_strings(data_folder, image),0)
             if combined_mask is 0:
                 combined_mask = np.zeros(mask.shape)
-            mask = cv2.threshold(mask, 20, 255, cv2.THRESH_BINARY)[1]
+            # mask = cv2.threshold(mask, 20, 255, cv2.THRESH_BINARY)[1]
             combined_mask += mask
             total += 1
             #show the image
-    combined_mask = combined_mask/total*100/255
-    final_mask = cv2.threshold(combined_mask, 75, 100, cv2.THRESH_BINARY)[1]
-    # plt.imshow(final_mask, cmap='gray')
-    # plt.show()    
-    return final_mask
+    combined_mask = combined_mask/total
+    # larger_mask = cv2.resize(combined_mask, None, fx=8, fy=8, interpolation=cv2.INTER_NEAREST)
+    # mask_3d = np.stack((larger_mask,) * 3, axis=-1)
+    # mask_3d = mask_3d.astype('uint8')
 
-final_mask = show_images()
+    # # blur = cv2.GaussianBlur(mask_3d, (15, 15), 0)
+    # blur = cv2.cvtColor(mask_3d, cv2.COLOR_BGR2GRAY)
+    
+    # # Use Hough Transform to detect circles
+    # circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, dp=1, minDist=int(blur.shape[0]/3),
+    #                             param1=50, param2=30, minRadius=int(blur.shape[0]/3), maxRadius=0)
+
+    # # Ensure at least some circles were found
+    # if circles is not None and len(circles) == 1:
+    #     # Convert the circle parameters a, b and r to integers.
+    #     circles = np.round(circles[0, :]).astype("int")
+        
+    #     cv2_mask = np.zeros(combined_mask.shape, dtype=np.uint8)   
+        
+    #     # Draw the circles on the mask
+    #     x, y, r = circles[0]
+    #     x = round(x/8)
+    #     y = round(y/8)
+    #     r = round(r/8)
+    #     cv2.circle(cv2_mask, (x, y), r, 100, -1)
+        
+    #     kernel_size = 1  # This is a 5x5 kernel. Adjust this size as needed.
+    #     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+
+    #     cv2_mask = cv2.dilate(cv2_mask, kernel, iterations=1)
+
+
+    kernel_size = 3  # This is a 5x5 kernel. Adjust this size as needed.
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_size, kernel_size))
+    thresh_mask = cv2.threshold(combined_mask, 50, 100, cv2.THRESH_BINARY)[1]
+    show_mask = np.zeros((*thresh_mask.shape,3), dtype = np.uint8)
+    for row in range(thresh_mask.shape[0]):
+        for col in range(thresh_mask.shape[1]):
+            if thresh_mask[row, col] == 100:
+                show_mask[row, col, :] = combined_mask[row, col]
+            else:
+                show_mask[row, col, 0:1] = combined_mask[row, col]
+                show_mask[row, col, 0] = 100
+    
+    plt.imshow(show_mask)
+    plt.show()
+    return thresh_mask
+
+final_mask = mask_background()
 
 
 
@@ -285,6 +327,8 @@ def bell_curve(inputs):
 def analyze_srtc_data():
     data = []
     sigma = 20
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
     # x = Jcube_to_csv(size, size, csv=join_strings(data_folder, "Aadvik0.93_0.01_1.00_0.01_0.01_0.50_0.10_p000_geo.colorCCD.Jcube"))
     for ind, image_string in enumerate(listdir):
         # plt.figure()
@@ -336,22 +380,23 @@ def analyze_srtc_data():
             # print(f"Root Mean Squared Error (RMSE): {rmse}")
             #make 2 subplots
             
-            new_image_string = str(ind) + "_" + image_string[11:image_string.index("_p000")]
+            new_image_string = image_string[11:image_string.index("_p000")]
             splitted_string = new_image_string.split("_")[0:6]; splitted_string[:] = [float(x) for x in splitted_string]
+            new_image_string = str(ind) + "_" + new_image_string
             print(ind, new_image_string, fit_data[0]["u1"], fit_data[0]["u2"], r2, mae, mse, rmse)
             
-            fig, axes = plt.subplots(1, 2, figsize=(16, 8))
-            plt.title("Image and Fitted Data")
-            eme_bool = emissions == 90
-            axes[0].imshow(np.where(eme_bool, emissions, masked_image), cmap='gray')
-            axes[1].set_ylim(0, 255)
-            axes[1].plot(fit_obj.emission_to_normalized(x),y, 'o')
-            # plt.plot(x,y2, 'o')
-            axes[1].plot(emission_angles_to_normalized, y_interp, label = "interpolated")
-            axes[1].plot(emission_angles_to_normalized, gaussian_filtered, label = "data used for fit")
-            axes[1].plot(emission_angles_to_normalized, fitted_data, label=" u1: " + str(np.around(fit_data[0]["u1"],2)) + " u2: " + str(np.around(fit_data[0]["u2"],2)))
-            axes[1].legend()
-            axes[1].set_title(f'R2 = {np.round(r2,3)} MAE = {np.round(mae,3)} MSE = {np.round(mse,3)} RMSE = {np.round(rmse,3)}')
+            # fig, axes = plt.subplots(1, 2, figsize=(16, 8))
+            # plt.title("Image and Fitted Data")
+            # eme_bool = emissions == 90
+            # axes[0].imshow(np.where(eme_bool, emissions, masked_image), cmap='gray')
+            # axes[1].set_ylim(0, 255)
+            # axes[1].plot(fit_obj.emission_to_normalized(x),y, 'o')
+            # # plt.plot(x,y2, 'o')
+            # axes[1].plot(emission_angles_to_normalized, y_interp, label = "interpolated")
+            # axes[1].plot(emission_angles_to_normalized, gaussian_filtered, label = "data used for fit")
+            # axes[1].plot(emission_angles_to_normalized, fitted_data, label=" u1: " + str(np.around(fit_data[0]["u1"],2)) + " u2: " + str(np.around(fit_data[0]["u2"],2)))
+            # axes[1].legend()
+            # axes[1].set_title(f'R2 = {np.round(r2,3)} MAE = {np.round(mae,3)} MSE = {np.round(mse,3)} RMSE = {np.round(rmse,3)}')
             
             if std > 35 or np.max(brightness_arr) < 60:
                 data.append([*splitted_string,fit_data[0]["u1"]+fit_data[0]["u2"], False])
@@ -360,12 +405,11 @@ def analyze_srtc_data():
                 data.append([*splitted_string,fit_data[0]["u1"]+fit_data[0]["u2"], True])
                 new_image_string += "_good"
 
-            # plt.show()
-            print(new_image_string)
-            plt.savefig(join_strings(output_folder, "SRTC++_" + new_image_string + ".png"), dpi=300)
-            plt.clf()
-            plt.close()
-            # surface 
+            # # plt.show()
+            # print(new_image_string)
+            # plt.savefig(join_strings(output_folder, "SRTC++_" + new_image_string + ".png"), dpi=300)
+            # plt.clf()
+            # plt.close()
 
     write_rows_to_csv(["input1","input2", "input3", "input4", "input5", "input6", "output", "usable"], data, 'output.csv')
 

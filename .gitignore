@@ -11,7 +11,7 @@ __pycache__
 data/figures/prod/quads/
 data/figures/prod/profile_previews/
 figures/
-
+data/SRTC++/output/*
 
 # General
 *.log

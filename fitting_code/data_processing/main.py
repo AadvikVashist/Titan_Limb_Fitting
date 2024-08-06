@@ -73,5 +73,5 @@ def run_all_limb_processing(multiprocess: Union[bool, int] = False, emission_cut
 
 def process_srtc_data():
     string_fill("ANALYZE SRTC DATA")
-    # analyze_srtc_data()
+    analyze_srtc_data()
     run() 
