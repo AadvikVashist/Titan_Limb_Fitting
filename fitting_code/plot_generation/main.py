@@ -1,12 +1,8 @@
-
-
-
 from fitting_code.plot_generation.generate_previews import generate_cube_previews
 from fitting_code.plot_generation.generate_four_figs import gen_quad_plots
 from fitting_code.plot_generation.u import gen_u1_u2_figures
 from fitting_code.plot_generation.misc_plotting import gen_plots
 from fitting_code.plot_generation.save_bands import gen_image_bands
-
 from fitting_code.plot_generation.timeline import timeline_figure
 from typing import Union
 
@@ -19,7 +15,6 @@ def gen_all_plots(devEnvironment: bool = True, multi_process: Union[bool,int] = 
     
     x = timeline_figure(devEnvironment=devEnvironment)
     # x.gen_figures()
-    
     
     plots = gen_u1_u2_figures(devEnvironment=devEnvironment)
     plots.gen_u_vs_wavelength(multi_process=multi_process)

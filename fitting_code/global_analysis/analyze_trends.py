@@ -1,4 +1,3 @@
-
 from settings.get_settings import join_strings, check_if_exists_or_write, SETTINGS, get_cumulative_filename
 import re
 import time
@@ -185,10 +184,26 @@ class trend_analysis:
         transition_south = transitional_period["transition_south"]
         mean_transition = transitional_period["mean_transition"]
         plt.figure(1, figsize=[15,5])
-        plt.title("Transition Periods vs time")
+        plt.title("Transition Wavelength (µm) vs time")
         plt.xlabel("Time (years)")
-        plt.xticks(np.arange(int(np.min(cube_time)), int(np.max(cube_time)) + 1, 1))
-        plt.ylabel("Transition Period (µm)")
+        
+        # More robust tick handling
+        min_year = int(np.min(cube_time))
+        max_year = int(np.max(cube_time)) + 1
+        
+        # Set major ticks at yearly intervals
+        plt.gca().xaxis.set_major_locator(plt.MultipleLocator(1))
+        
+        # Disable minor ticks
+        plt.gca().xaxis.set_minor_locator(plt.NullLocator())
+        
+        # Set the x-axis limits explicitly
+        plt.xlim(min_year, max_year)
+        ticks = range(min_year, max_year + 1, 1)
+        plt.xticks(ticks)
+        
+
+        plt.ylabel("Transition Wavelength (µm)")
         plt.plot(cube_time, transition_north, label="Northern Transition")
         plt.plot(cube_time, transition_south, label="Southern Transition")
         plt.plot(cube_time, mean_transition, label="Mean Transition")
@@ -198,60 +213,7 @@ class trend_analysis:
             os.makedirs(fig_path)
         plt.savefig(join_strings(fig_path,"all.png"), dpi = 300)
         # plt.show()
-        plt.close()
-        # wave_bands = []
-        # northern_transect = []
-        # southern_transect = []
-        # for index, (wave_band, wave_data) in enumerate(self.data.items()):
-        #     if "µm_" not in wave_band:
-        #         continue
-        #     if index in self.unusable_bands:
-        #         continue
-        #     try:
-        #         northern_transect.append(wave_data["north_side"]["fit"]["quadratic"]["optimal_fit"]["fit_params"]["u1"] + wave_data["north_side"]["fit"]["quadratic"]["optimal_fit"]["fit_params"]["u2"])
-        #     except:
-        #         northern_transect.append(np.nan)
-        #     try:
-        #         southern_transect.append(wave_data["south_side"]["fit"]["quadratic"]["optimal_fit"]["fit_params"]["u1"] + wave_data["south_side"]["fit"]["quadratic"]["optimal_fit"]["fit_params"]["u2"])
-        #     except:
-        #         southern_transect.append(np.nan)
-        #     wave_length = wave_band.split("_")[0][0:-2]
-        #     wave_bands.append(float(wave_length))
-
-        # wave_bands, northern_transect, southern_transect = zip(*sorted(zip(wave_bands, northern_transect, southern_transect)))
-        # mask = np.isfinite(northern_transect) & np.isfinite(southern_transect)
-        # wave_bands = np.array(wave_bands)[mask]
-        # northern_transect = np.array(northern_transect)[mask]
-        # southern_transect = np.array(southern_transect)[mask]
-        # smoothed_northern_transect = gaussian_filter(northern_transect, sigma=4)
-        # smoothed_southern_transect = gaussian_filter(southern_transect, sigma=4)
-        # northern_transition = self.detector_smoothed_comparison(wave_bands, northern_transect)
-        # southern_transition = self.detector_smoothed_comparison(wave_bands, southern_transect)
-        # transects =[]
-        # if len(northern_transition) > 1:
-        #     transects.extend(northern_transition)
-        # else:
-        #     transects.append(northern_transition[0])
-        # if len(southern_transition) > 1:
-        #     transects.extend(southern_transition)
-        # else:
-        #     transects.append(southern_transition[0])
-        # plt.figure(figsize=(15, 5))
-        # # plt.plot(wave_bands, smoothed_northern_transect, label = "Northern Transect Smoothed")
-        # # plt.plot(wave_bands, smoothed_southern_transect, label = "Southern Transect Smoothed")
-        # plt.xlabel("Wavelength (µm)")
-        # plt.ylabel("Measure of Limb Brightness Darkness (u1+u2)")
-        # plt.plot(wave_bands, northern_transect, label = "Northern Transect")
-        # plt.plot(wave_bands, southern_transect, label = "Southern Transect")
-        # plt.hlines(0, np.min(wave_bands), np.max(wave_bands), linestyles="dashed", label="Zero", color="black")
-        # plt.vlines(transects, np.min(northern_transect), np.max(northern_transect), linestyles="dashed", label="Transition", color="red")
-        # plt.legend()
-        # fig_path = join_strings(self.save_dir, cube_name + ".png")
-        # plt.savefig(fig_path, dpi = 300)
-        # # plt.show()
-        # plt.close()
-        # return northern_transition, southern_transition
-    
+        plt.close()    
     def look_at_odd_data(self, range = None, non_fitted = False,plot = True):
         mu = np.linspace(0,1,100)
         fit_obj = fit_data()

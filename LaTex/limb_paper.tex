@@ -1,3 +1,4 @@
+% chktex-file 8
 %\cSpell:disable
 \documentclass[tighten,linenumbers,twocolumn]{aastex631}
 \makeatletter
@@ -19,9 +20,9 @@
 %\usepackage{lineno}
 %\usepackage{soul}
 
-\linenumbers
-\def\Rsat{$\mathrm{R}_{\mathrm{\saturn}}$} 
-\def\um{\mathrm{\mu m}}
+\linenumbers{}
+\def\Rsat{$\mathrm{R}_{\mathrm{\saturn}}$}
+\def\um{\mathrm{\mu{} m}}
 
 \newcommand{\editTwo}[1]{{\textbf{#1}}}
 \newcommand{\old}[1]{}
@@ -37,9 +38,13 @@
 \title{A Temporal Analysis of Cassini/VIMS Limb Brightness Profiles of Titan from 2004-2017
 }
 % All Authors
-\author[0000-0002-6318-7226]{Aadvik Vashist}\affiliation{Department of Physics; University of Idaho; Moscow, ID 83844}\affiliation{River Hill High School; Clarksville, MD; 21029}
+\author[0000-0002-6318-7226]{Aadvik Vashist}
+\affiliation{Stanford University; Stanford, CA 94305}
+\affiliation{Department of Physics; University of Idaho; Moscow, ID 83844}
 \author[0000-0002-7755-3530]{Jason W. Barnes}\affiliation{Department of Physics; University of Idaho; Moscow, ID 83844}
-% \author[0000-0001-8528-4644]{Ralph D. Lorenz}\affiliation{Johns Hopkins University Applied Physics Laboratory; Laurel, MD 20723}
+\author[0000-0002-8482-4669]{Gabriel Steward}\affiliation{Department of Physics; University of Idaho; Moscow, ID 83844}
+
+
 
 \correspondingauthor{Aadvik Vashist}
 \email{avashist@uidaho.edu}
@@ -48,7 +53,7 @@
 %\cSpell:enable
 
 \begin{abstract}
-We analyze the evolution of brightness profiles from \textit{Cassini} Visual and Infrared Mapping Spectrometer (VIMS) spectral mapping cubes to gain insights into the vertical structure of Titan’s atmosphere. Using low-phase angle observations from 2004-2017, we observe changes in the behavior of limb brightening transects with regard to wavelength and time. These transects can independently track the development of different atmospheric layers on a global level. We show that Titan’s limb brightening depends on wavelength, and vary with time. A comparison of brightness profiles from the northern hemisphere and southern hemisphere supports existing analyses of asymmetry behavior. Limb observations of Titan's upper atmosphere presage existing observations of the lower stratospheric dichotomy, as characterized by \cite{vashist2023titan}. By using a combination of both observations, we are able to develop a greater understanding of the underlying seasonal dynamics of Titan’s haze, specifically its vertical structure.
+We analyze the evolution of brightness profiles from \textit{Cassini} Visual and Infrared Mapping Spectrometer (VIMS) spectral mapping cubes to gain insights into the vertical structure of Titan's atmosphere. Using low-phase angle observations from 2004-2017, we observe changes in the behavior of limb brightening transects with regard to wavelength and time. These transects can independently track the development of different atmospheric layers on a global level. We show that Titan's limb brightening depends on wavelength, and vary with time. A comparison of brightness profiles from the northern hemisphere and southern hemisphere supports existing analyses of asymmetry behavior. Limb observations of Titan's upper atmosphere presage existing observations of the lower stratospheric dichotomy, as characterized by \cite{vashist2023titan}. By using a combination of both observations, we are able to develop a greater understanding of the underlying seasonal dynamics of Titan's haze, specifically its vertical structure.
 
 \end{abstract}
 \keywords{Titan, Upper atmosphere, Seasonal phenomena}
@@ -57,6 +62,8 @@ We analyze the evolution of brightness profiles from \textit{Cassini} Visual and
 
 %Introduction
 \section{INTRODUCTION}
+% TODO: Jason - write this up
+
 % Saturn's moon Titan exhibits many properties not found in other satellites. As first observed by Voyager 1 \citep{smith1981encounter}, Titan's ubiquitous atmospheric haze prevents optical imaging of the surface. The haze distribution varies as a function of latitude \citep{Sromovsky1981}, altitude \citep{smith1982new,tomasko2005rain}, and time \citep{lorenz1997titan,west2011evolution}. Titan's haze also shows albedo differences between its northern and southern hemispheres that shift near the equator. As the seasons progress, atmospheric circulation changes the global haze distribution, culminating in a reversal every 15 years \citep{brown2009titan}. The reversal presents as an albedo dichotomy in the otherwise featureless atmosphere. The existence of the asymmetry also results in a distinct boundary line that separates the north and south hemispheres.
 
 % The Voyager 1 flyby highlighted the existence of a North-South Asymmetry (NSA) between the two hemispheres \citep{smith1981encounter}. Previous discoveries also found a tilt of the boundary line relative to the solid-body equator of Titan \citep{Roman2009}. The boundary, as reported by \cite{Sromovsky1981} with Voyager 1 data, was located at roughly 5.5\textdegree{}S. More recent discoveries show a seasonal reversal in the latitude of the asymmetry across the equator.
@@ -73,35 +80,114 @@ We analyze the evolution of brightness profiles from \textit{Cassini} Visual and
 % Finally, in Section 5, we compare our results to the existing archive of NSA boundary observations and discuss the implications of these findings on the atmospheric conditions of Titan.
 
 
-
-\section{OBSERVATIONS and METHODS}
-As shown in \textbf{table will go here}, we analyze Cassini VIMS-V and VIMS-IR observations from \textbf{xyz} targeted flybys and \textbf{xyz} targeted flybys, spanning the Cassini probe's 13 year operational period from 2004-2017. 
-
+\section{OBSERVATIONS}
+As shown in Table~\ref{table:data}, we analyze Cassini VIMS-V and VIMS-IR observations from 24 
+targeted flybys and 5non-targeted flybys, spanning the Cassini probe's 13 year operational period from 2004-2017. 
 The VIMS instruments have been well characterized \cite{brown2004cassini}, with the VIMS-V (Visual) channel of the using a two-dimensional array detector covering a spectral range from 0.30 to 1.05 µm with 96 distinct bands and the VIMS-IR (Infrared) channel using a one-dimensional detector covering a broader spectral range of 0.3 to 5.1 µm with 256 wavelength bands.
 \subsection{Cube Selection}
 
-We selected flybys using the following criteria: (1) simultaneous observations from both the VIMS-V and VIMS-IR instruments; (2) a low phase angle; (3) full-disk coverage with high limb visibility; (4) sufficient spatial resolution (200km/pixel); (5) sub-spacecraft longitude between 20\textdegree{}S and 20\textdegree{}N; and (6) sufficient time cadence so as to obtain a comprehensive distribution of measurements during the \textit{Cassini} mission. It is important to note that during the latter half of the \textit{Cassini} mission, the spacecraft was in a polar orbit, which limited the number of flybys that met the above criteria, leading to the selection of non-targeted flybys and sparser temporal coverage.
+We selected flybys using the following criteria: (1) simultaneous observations from both the VIMS-V and VIMS-IR instruments; (2) a low phase angle (<30\textdegree{} preferred); (3) full-disk coverage with high limb visibility; (4) sufficient spatial resolution (200km/pixel); (5) sub-spacecraft longitude between 20\textdegree{}S and 20\textdegree{}N; and (6) sufficient time cadence so as to obtain a comprehensive distribution of measurements during the \textit{Cassini} mission. It is important to note that during the latter half of the \textit{Cassini} mission, the spacecraft was in a polar orbit, which limited the number of flybys that met the above criteria, leading to the selection of non-targeted flybys, expansion of criteria, and sparser temporal coverage.
+
+% Talk about VIMS, talk about preprocessing 
+% Talk about seperation of surface and limb (rq from pyvims)
+% Radius used for titan - known surface.looking at shape of curve, not just the limb (changes)
+% example picture of limb darkening and limb brightening
+
+
+%\cSpell:disable
+\begin{deluxetable*}{|ccccccccc|}
+    \tablewidth{0pt}
+    \tablecaption{North-South Boundary Observations}
+    \label{table:data}
+    \tablehead{
+    %\COLSTART
+    \colhead{Year} & %year
+    \colhead{Month} & %month
+    \colhead{Cassini flyby} & %flyby
+    % \colhead{$L_s$ ($^\circ$)} & %ls
+    \colhead{Sub-Spacecraft Latitude ($^\circ$)} & %sub_spacecraft_lat
+    \colhead{Spatial Resolution (km/pixel)} & %spatial_res
+    \colhead{Phase Angle ($^\circ$)} %phase
+    %\COLSTOP
+    }
+    \startdata
+    \hline
+    %\GENSTART
+    2004 & 10 & TA & -15 N & 108 km/pixel & 13\\
+    2005 & 2 & T3 & -3 N & 147 km/pixel & 20\\
+    2005 & 10 & T8 & n/a & 79 km/pixel & 23\\
+    2005 & 12 & T9 & n/a & 82 km/pixel & 28\\
+    2006 & 2 & T11 & n/a & 100 km/pixel & 18\\
+    2007 & 5 & T30 & 15 N & 137 km/pixel & 28\\
+    2007 & 5 & T31 & 10 N & 87 km/pixel & 23\\
+    2007 & 6 & T32 & 2 N & 109 km/pixel & 15\\
+    2007 & 6 & T33 & n/a & 134 km/pixel & 12\\
+    2007 & 8 & T35 & -3 N & 127 km/pixel & 27\\
+    2007 & 10 & $051TI^{1}$ & 14 N & 207 km/pixel & 26\\
+    2009 & 7 & T58 & -28 N & 116 km/pixel & 28\\
+    2009 & 8 & T61 & -7 N & 142 km/pixel & 14\\
+    2009 & 10 & T62 & -1 N & 145 km/pixel & 11\\
+    2010 & 4 & T67 & n/a & 88 km/pixel & 16\\
+    2011 & 4 & T75 & n/a & 124 km/pixel & 16\\
+    2011 & 6 & T77 & n/a & 89 km/pixel & 22\\
+    2011 & 12 & T79 & n/a & 124 km/pixel & 17\\
+    2012 & 1 & T81 & -8 N & 107 km/pixel & 23\\
+    2012 & 5 & T83 & -8 N & 116 km/pixel & 23\\
+    2012 & 6 & T84 & -14 N & 119 km/pixel & 28\\
+    2013 & 5 & $191TI^{1}$ & -9 N & 267 km/pixel & 28\\
+    2014 & 4 & T100 & 50 N & 130 km/pixel & 35\\
+    2015 & 7 & T112 & n/a & 117 km/pixel & 26\\
+    2015 & 11 & T114 & -1 N & 99 km/pixel & 26\\
+    2016 & 1 & T115 & -1 N & 120 km/pixel & 27\\
+    2016 & 12 & $255TI^{1}$ & 46 N & 326 km/pixel & 20\\
+    2017 & 5 & $273TI^{1}$ & 38 N & 243 km/pixel & 16\\
+    2017 & 6 & $278TI^{1}$ & 53 N & 179 km/pixel & 28\\
+    %\GENSTOP
+    \hline
+    \enddata
+    \tablenotetext{1}{non-targeted flyby of Titan}
+    %\tablecomments{. }
+    \end{deluxetable*}
+    %\cSpell:enable
+
+\section{Methods}
+\subsection{SRTC++} 
+% TODO: Jason/Gabe to write this - explain the assumptions, model parameters, how SRTC++ works, what drove the choice of parameters, how we validated the model.
+
 
 \subsection{Image Processing}
 \label{sec: image processing}
 
-Calibrated VIMS-V data was processed to remove any variations in vertical pixel arrangements. Destriping was performed by masking surface results and deducting the average value from each vertical pixel line, effectively eliminating inconsistencies in the transects. This correction was feasible owing to the cube selection, which ensures that each selected data cube encompasses space for a portion of all the vertical pixel lines. All post-processed data was validated through a comparison of the original and processed images. There was no post-processing on calibrated VIMS-IR cubes. Known surface bands from \textbf{paper to cite here} were not included in the analysis to avoid contamination of the haze signal.
+Calibrated VIMS-V data was processed to remove any variations in vertical pixel arrangements. Since all cubes were full disks with limb visiblity, destriping was able to be performed using the sky pixels as a baseline from each vertical pixel line, eliminating a majority of the inconsistencies in the transects \textbf{cite the paper that talks about VIMS-V destriping here}. All post-processed data was human validated through a comparison of the original and processed images. There was no post-processing on calibrated VIMS-IR cubes, nor on any SRTC++ cubes. Known surface bands from \textbf{paper to cite on known Titan surface window wavelengths} were not included in the analysis to avoid contamination of the haze signal. 
+%TODO: Aadvik - takl about using only lower wavelenght - as accuract was super low- degradiation in the VIMS-IR data was significant. 
 
 
-Limb profiles were sampled from flyby observations of Titan using a transect method. The center of the disk for each cube was determined by locating where the line normal to the stellar surface is collinear with the line of sight of the observer within each cube and determining where the emission angle would be 0. Transects were sampled for various angles relative to North, aiming to sample the northern and southern hemispheres. As shown in \textbf{transect fig}, transects are selected based on the angle relative to the equator and the direction relative to East/West. We select two transects, one sampling the Northern hemisphere 30\textdegree{} North of the equator and the other 30\textdegree{} South of the equator. The choice of East/West facing transects is determined based on the viewing geometry, sampling data on the hemisphere that does not contain the terminator. Functionally, this is determined based on the hemispheric location of the point with the lowest angle between the incoming sunlight and the normal line to the planetary surface. Given that the latitude of the atmospheric dichotomy is rarely the same as the solid-body equator, transect data that is within a pixel of the North-South Boundary is removed, including any data points between the boundary and the center of the disk. The result is two transects for each band of each VIMS-V and VIMS-IR cube.
+Limb profiles were sampled from flyby observations of Titan using a transect method. The center of the disk for each cube was determined by locating where the line normal to the stellar surface is collinear with the line of sight of the observer within each cube and determining where the emission angle would be 0. To maximize sampling density, images were upsampled 5x. Transects were sampled for various angles relative to North, aiming to sample the northern and southern hemispheres. As shown in \textbf{transect fig}, transects are selected based on the angle relative to the equator and the direction relative to East/West. We select two transects, one sampling the Northern hemisphere 30\textdegree{} North of the equator and the other 30\textdegree{} South of the equator. The choice of East/West facing transects is determined based on the viewing geometry, sampling data on the hemisphere that does not contain the terminator. Functionally, this is determined based on the hemispheric location of the point with the lowest angle between the incoming sunlight and the normal line to the planetary surface. Given that the latitude of the atmospheric dichotomy is rarely the same as the solid-body equator, transect data that is within a pixel of the North-South Boundary location,as determined by \textbf{cite the paper that shows this (maybe ours??)}, is removed, including any data points between the boundary and the center of the disk. The result is two transects for each band of each VIMS-V and VIMS-IR cube. 
 
 
+
+% TODO: Aadvik - Trust mapping - do mean/std instead of std/mean FIGURE HERE, and do the writeup as well
 \subsection{Quadratic Limb Darkening Law Regression}
-
+%TODO: Aadvik - reference quad figures here - we should show the transects themselves, and how the fits are generally effective
 To determine the magnitude of limb darkening and brightening within each transect, we fit the data using the known stellar Quadratic Limb Darkening Law (QLDL) from \cite{kopal1950limb, brown2001hubble}. 
 
 \begin{equation}
     \frac{I(\mu)}{I(1)} = \left[1 - u_{1}(1 - \mu) - u_{2}(1 - \mu)^2\right]
 \end{equation}
 
-Where $\mu$ is the cosine of the angle between a line normal to the stellar surface and the line of sight of the observer leading to a scale from 1 to 0, one representing the center of the disk and 0 being the limb. $I(1)$ represents the intensity at the center of the disk. $u_{1}$ and $u_{2}$ are limb darkening coefficients. The limb darkening coefficients alone are not well constrained. So to measure the magnitude of limb darkening/brightening, we use $\left.\frac{1}{I(1)}\frac{dI}{d\mu}\right|_{\mu=0.5} = u_{1} + u_{2}$. Regression used a Levenberg-Marquardt algorithm with no parameter bounds applied, though initial values for positive values indicate limb darkening, while negative values indicate limb brightening. Since the sampling density decreases with emission angle, limb pixels gained increased weighting. Resulting fits are compared to the original data in \textbf{quadrant fig}. Variations in accuracy are largely attributed to noise in the raw data and lower sampling density at higher emission angles.
+Where $\mu$ is the cosine of the angle between a line normal to the stellar surface and the line of sight of the observer leading to a scale from 1 to 0, one representing the center of the disk and 0 being the limb. $I(1)$ represents the intensity at the center of the disk. $u_{1}$ and $u_{2}$ are limb darkening coefficients. The limb darkening coefficients alone are not well constrained. So to measure the magnitude of limb darkening/brightening, we use $\left.\frac{1}{I(1)}\frac{dI}{d\mu}\right|_{\mu=0.5} = u_{1} + u_{2}$. Regression used a Levenberg-Marquardt algorithm \textbf{maybe cite?} 
+with no parameter bounds applied, though initial values for positive values indicate limb darkening, while negative values indicate limb brightening. Since the sampling density decreases with emission angle, limb pixels gained increased weighting. Resulting fits are compared to the original data in \textbf{quadrant fig}. Variations in accuracy are largely attributed to noise in the raw data and lower sampling density at higher emission angles.
 
-Visually, the limb darkening is prevalent at lower, visible, wavelengths, while the limb brightening is more prominent at higher, near-infrared, wavelengths, though the wavelength where darkening and brightening transition seemingly evolves. The differences in limb darkening and brightening are logical when factoring the low albedo of haze at visible wavelengths and the increased haze-ratio at higher altitudes. Limb observations also reinforce existing knowledge of the north-south asymmetry's visual shift, with a strong hemispheric dichotomy seen in most bands.  
+Visually, the limb darkening is prevalent at lower, visible, wavelengths, while the limb brightening is more prominent at higher, near-infrared, wavelengths, though the wavelength where darkening and brightening transition seemingly evolves. The differences in limb darkening and brightening are logical when factoring the low albedo of haze at visible wavelengths and the increased haze-ratio at higher altitudes. Limb observations also reinforce existing knowledge of the north-south asymmetry's visual shift, with a strong hemispheric dichotomy seen in most bands.
+
+
+% TODO: Group - New name for this section
+\subsection{Compiled Analysis} 
+% TOOD: Aadvik - writeup here - combining the vims and srtc++ data. 
+\section{Results}
+
+% u vs wavelength stacked (3 at different time periods)
+\section{Conclusion}
 
 
 % As shown in \autoref{table: data}, we analyze Cassini VIMS observations of Titan from 12 targeted flybys from 2004-2015 and 2 non-targeted flybys taken in 2017. Each flyby observed Titan from $0.356~\um$ to $1.046~\um$\ in 96 distinct wavelength channels to sample the transition from Southern Summer to Northern Summer \citep{brown2004cassini}. We selected these particular flybys based on boundary visibility, sufficient time cadence, and baseline so as to obtain measurements spaced out over the entire period of \textit{Cassini} observations. For a majority of the flybys, the spatial sampling per pixel is $\sim$45 km or 1\textdegree{} of latitude. 
@@ -112,61 +198,6 @@ Visually, the limb darkening is prevalent at lower, visible, wavelengths, while 
 % \autoref{figure:flowchart} outlines our VIMS image processing algorithm. An issue found in the VIMS data is the vertical striping noise in the original images. We could not directly correct the striping noise because the data used to subtract the background on board Cassini was not transmitted back to Earth \citep{brown2004cassini}. To mitigate the striping issues, we increased the signal-to-noise ratio by co-adding images, and then mapping the final co-added image onto a cylindrical projection \citep{vixie2012mapping}. The spatial sampling of the cylindrical images is $\sim$45 km or 1\textdegree{} of latitude. Note that the vertical striping appears as superimposed stripes across cylindrical projections. Additionally, these projections do not include limb pixels with an emission angle above 60$^\circ$ and thus minimize limb-darkening effects. Images at 96 distinct wavelengths, also known as bands, were created for each flyby. 
 % After we generate a final set of images, we adapt the methods from \cite{Roman2009} to determine the latitude of the NSA boundary. We shift the images by 6\textdegree{}N and 6\textdegree{}S and then subtract to create a brightness contrast of each image, which highlights the presence of an asymmetry \citep{Roman2009}. These maps were then sequentially analyzed along each longitude using a sixth-order polynomial fit to smooth out signal variations. We found the locations of critical points using the derivative function of the fit; extraneous values, such as imaginary solutions and numbers outside of the latitude range, were removed to leave only the latitude location of the NSA at each longitude column. Our algorithm then finds the latitude value of the NSA transition for all the columns within each projection and then averages them to determine the location of the NSA for each band in the flyby. Since each column has a varied value for the NSA, we applied a moving average to the data to flatten irregularities in column brightness data. Using the latitude value found in each image, we apply a simple average of the brightness 30\textdegree{}N and 30\textdegree{}S of the NSA transition to determine the North/South Flux Ratio. We derive I/F values using average visible latitude, where each latitude is an average of all visible longitudinal brightness values. 
 % We can attribute various inaccuracies in our results to sampling area, surface wavelengths, changing sub-solar and sub-spacecraft latitudes, and/or phase angle differences within the flybys. We determine uncertainties in our image processing algorithm through the standard deviation of the derived latitude value of every image. Additionally, instrumental artifacts and noise within the VIMS-V instrument play a factor. Inherent systematic errors also derive from the softness of the boundary itself and any potential offset between the atmospheric pole and the geographic pole.
-
-%\cSpell:disable
-\begin{deluxetable*}{|ccccccccc|}%rlcrrrrrr|}
-\tablecaption{North-South Boundary Observations\label{table: data}}
-\tablewidth{0pt}
-\tablehead{
-%\COLSTART
-\colhead{Year} & %year
-\colhead{Month} & %month
-\colhead{Cassini flyby} & %flyby
-% \colhead{$L_s$ ($^\circ$)} & %ls
-\colhead{Sub-Spacecraft Latitude ($^\circ$)} & %sub_spacecraft_lat
-\colhead{Spatial Resolution (km/pixel)} & %spatial_res
-\colhead{Phase Angle ($^\circ$)} %phase
-%\COLSTOP
-}
-\startdata
-\hline
-%\GENSTART
-2004 & 10 & TA & -15 N & 108 km/pixel & 13\\
-2005 & 2 & T3 & -3 N & 147 km/pixel & 20\\
-2005 & 10 & T8 & n/a & 79 km/pixel & 23\\
-2005 & 12 & T9 & n/a & 82 km/pixel & 28\\
-2006 & 2 & T11 & n/a & 100 km/pixel & 18\\
-2007 & 5 & T30 & 15 N & 137 km/pixel & 28\\
-2007 & 5 & T31 & 10 N & 87 km/pixel & 23\\
-2007 & 6 & T32 & 2 N & 109 km/pixel & 15\\
-2007 & 6 & T33 & n/a & 134 km/pixel & 12\\
-2007 & 8 & T35 & -3 N & 127 km/pixel & 27\\
-2007 & 10 & $051TI^{1}$ & 14 N & 207 km/pixel & 26\\
-2009 & 7 & T58 & -28 N & 116 km/pixel & 28\\
-2009 & 8 & T61 & -7 N & 142 km/pixel & 14\\
-2009 & 10 & T62 & -1 N & 145 km/pixel & 11\\
-2010 & 4 & T67 & n/a & 88 km/pixel & 16\\
-2011 & 4 & T75 & n/a & 124 km/pixel & 16\\
-2011 & 6 & T77 & n/a & 89 km/pixel & 22\\
-2011 & 12 & T79 & n/a & 124 km/pixel & 17\\
-2012 & 1 & T81 & -8 N & 107 km/pixel & 23\\
-2012 & 5 & T83 & -8 N & 116 km/pixel & 23\\
-2012 & 6 & T84 & -14 N & 119 km/pixel & 28\\
-2013 & 5 & $191TI^{1}$ & -9 N & 267 km/pixel & 28\\
-2014 & 4 & T100 & 50 N & 130 km/pixel & 35\\
-2015 & 7 & T112 & n/a & 117 km/pixel & 26\\
-2015 & 11 & T114 & -1 N & 99 km/pixel & 26\\
-2016 & 1 & T115 & -1 N & 120 km/pixel & 27\\
-2016 & 12 & $255TI^{1}$ & 46 N & 326 km/pixel & 20\\
-2017 & 5 & $273TI^{1}$ & 38 N & 243 km/pixel & 16\\
-2017 & 6 & $278TI^{1}$ & 53 N & 179 km/pixel & 28\\
-%\GENSTOP
-\hline
-\enddata
-\tablenotetext{1}{non-targeted flyby of Titan}
-%\tablecomments{. }
-\end{deluxetable*}
-%\cSpell:enable
 
 
 

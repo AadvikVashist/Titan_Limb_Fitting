@@ -169,7 +169,7 @@ class transition_wave:
             transition_south.append(np.mean(detector[1]))
             mean_transition.append(np.mean([np.mean(detector[0]), np.mean(detector[1])]))
         cube_time, transition_north, transition_south, mean_transition = zip(*sorted(zip(cube_time, transition_north, transition_south, mean_transition)))
-        plt.title("Transition Periods vs time")
+        plt.title("Transition Wavelength (µm) vs time")
         
         plt.plot(cube_time, transition_north, label="Northern Transition")
         plt.plot(cube_time, transition_south, label="Southern Transition")

@@ -7,17 +7,18 @@ cumulative*.pkl
 *.swp
 data/previews/
 data/*/dev
-__pycache__
-data/figures/prod/quads/
-data/figures/prod/profile_previews/
-figures/
 data/SRTC++/output/*
+__pycache__
+/figures/prod/quads/
+/figures/prod/profile_previews/
+/figures/dev/
 
 # General
 *.log
 *.aux
 *.out
 *.toc
+
 *.lof
 *.lot
 *.fls
@@ -49,8 +50,8 @@ data/SRTC++/output/*
 *.dvi
 *.ps
 
-# Compiled PDF
-*.pdf
+# # Compiled PDF
+# *.pdf
 
 # Backup files
 *~
