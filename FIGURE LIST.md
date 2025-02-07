@@ -12,12 +12,12 @@
 - Demonstrates variations in fit accuracy
 - Likely shows examples of both limb darkening and brightening cases
 
-3.**Trust Mapping Figure** (mentioned in TODO)
+3.**Trust Mapping Figure** - Done
 
 - Would show mean/std analysis instead of std/mean
 - Details not specified in text
 
-4.**Transition period as a function of wavelength for three cubes**
+4.**Transition period as a function of wavelength for three cubes** - Done
 
 - Shows the transition period as a function of wavelength for three different cubes
 - One Cube is from prime (N Winter),
@@ -30,10 +30,19 @@ Purpose is to show evolution, and also the earlier transition in upper atmospher
 
 - Horizontally split - side byh side of one limb darkening, and one limb brightening. 
 
-6.**Flowchart Figure** (referenced as "figure:flowchart")
-
+6.**Flowchart Figure** (maybe)
 - Outlines VIMS image processing algorithm
 - Not detailed in current text but referenced
+- Gen in Python to use cursor
+
+7.**Destriping Figure**
+
+- Shows destriped data
+- Shows before and after destriping
+- Shows before and after destriping
+
+
+
 
 The text also suggests there should be figures showing:
 

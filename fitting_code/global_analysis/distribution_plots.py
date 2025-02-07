@@ -36,12 +36,12 @@ def setup_publication_style():
     })
 
 class PlotColors:
-    """Color scheme for plots."""
-    MAIN = '#2E5A9C'      # Deep blue
-    MEAN = '#D64545'      # Brighter red
-    MEDIAN = '#1FA34D'    # More vibrant green
-    DENSITY = '#FF6B6B'   # Coral
-    POINTS = '#404040'    # Dark gray
+    """Color scheme for plots using a colorblind-friendly palette."""
+    MAIN = '#3288BD'      # Blue that's distinguishable for most color vision types
+    MEAN = '#D53E4F'      # Vibrant red that maintains contrast
+    MEDIAN = '#66C2A5'    # Teal that's distinct from blue and red
+    DENSITY = '#F46D43'   # Orange that contrasts well with blue
+    POINTS = '#5E4FA2'    # Purple that maintains visibility
 
 def plot_parameter_distribution(
     values,
@@ -81,29 +81,33 @@ def plot_parameter_distribution(
     fig, (ax1, ax2) = plt.subplots(2, 1, height_ratios=[1.6, 1])
     plt.subplots_adjust(hspace=0.25, left=0.1, right=0.95, top=0.95, bottom=0.15)
     
-    # Create histogram
+    # Create histogram with hatching for better visibility
     counts, bins, _ = ax1.hist(values, 
                               bins=100,
                               color=PlotColors.MAIN,
                               edgecolor='black',
                               linewidth=0.5,
-                              alpha=0.8)
+                              alpha=0.7,
+                              hatch='/')
     
-    # Add kernel density estimate
+    # Add kernel density estimate with dashed pattern
     density = gaussian_kde(values)
     xs = np.linspace(x_min, x_max, 200)
     ax1.plot(xs, density(xs) * len(values) * (bins[1] - bins[0]), 
-             color=PlotColors.DENSITY, linewidth=0.5, alpha=0.8)
+             color=PlotColors.DENSITY, 
+             linewidth=1.0,
+             linestyle='--',
+             alpha=0.9)
     
     # Calculate statistics
     mean_value = values.mean()
     median_value = values.median()
     std_dev = values.std()
     
-    # Add mean and median lines to both plots
+    # Add mean and median lines to both plots with distinct patterns
     for ax in [ax1, ax2]:
-        ax.axvline(mean_value, color=PlotColors.MEAN, linestyle='--', linewidth=0.75)
-        ax.axvline(median_value, color=PlotColors.MEDIAN, linestyle=':', linewidth=1)
+        ax.axvline(mean_value, color=PlotColors.MEAN, linestyle='--', linewidth=1.0)
+        ax.axvline(median_value, color=PlotColors.MEDIAN, linestyle=':', linewidth=1.5)
     
     # Customize histogram
     ax1.set_title(title, pad=8)
@@ -142,13 +146,19 @@ def plot_parameter_distribution(
                       linewidth=0.5,
                       pad=0.4))
     
-    # Create violin plot
-    sns.violinplot(x=values, ax=ax2, 
+    # Create violin plot with hatching for better visibility
+    violin = sns.violinplot(x=values, ax=ax2, 
                    color=PlotColors.MAIN,
                    cut=0)
+    
+    # Add hatching to violin plot
+    for patch in violin.collections:
+        patch.set_hatch('/')
+        patch.set_alpha(0.7)
+    
     sns.stripplot(x=values, ax=ax2, 
                   color=PlotColors.POINTS,
-                  alpha=0.25,
+                  alpha=0.4,
                   size=1.5,
                   jitter=0.15,
                   rasterized=True)
@@ -179,6 +189,8 @@ def plot_parameter_distribution(
             dpi=600
         )
     
+    plt.close()
+    plt.clf()
     return fig, (ax1, ax2)
 
 def plot_limb_darkening_distribution(data_path=None, is_dev=True):

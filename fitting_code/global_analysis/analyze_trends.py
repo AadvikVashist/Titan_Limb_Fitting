@@ -365,40 +365,297 @@ class trend_analysis:
         filtered_wave = [w for ind,w in enumerate(wavelengths) if ind not in self.unusable_bands]
         filtered_trust_with_wave = [w for ind,w in enumerate(trust_with_wave) if ind not in self.unusable_bands]
 
+        # Set up publication-ready style
+        plt.style.use('default')
+        plt.rcParams.update({
+            'font.family': 'Times New Roman',
+            'mathtext.fontset': 'stix',
+            'font.size': 7,
+            'axes.labelsize': 8,
+            'axes.titlesize': 9,
+            'xtick.labelsize': 7,
+            'ytick.labelsize': 7,
+            'legend.fontsize': 6,
+            'figure.titlesize': 9,
+            'axes.grid': True,
+            'axes.grid.which': 'major',
+            'grid.alpha': 0.3,
+            'grid.linewidth': 0.5,
+            'axes.linewidth': 0.5,
+            'axes.edgecolor': 'black',
+            'lines.linewidth': 0.75,
+            'figure.dpi': 300,
+            'savefig.dpi': 600,
+            'figure.figsize': (4.5, 2.6),
+            'figure.constrained_layout.use': True
+        })
 
         if not os.path.exists(join_strings(self.fig_save_dir, self.fig_paths["trust_map"])):
             os.makedirs(join_strings(self.fig_save_dir, self.fig_paths["trust_map"]))
             
-        fig = plt.figure(figsize = [16,9])
-        plt.title("Trust Mapping vs Wavelength For All Cubes")
-        plt.xlabel("Wavelength (µm)")
-        plt.ylabel("std/mean")
-        plt.xticks(np.arange(0,5.5,0.1), minor = True)
-        plt.xticks(np.arange(0,5.5,0.5), minor = False)
-        plt.plot(wavelengths, trust_with_wave, label = "all wavelengths")
-        plt.plot(filtered_wave, filtered_trust_with_wave, label = "bands used for processing")
-        plt.legend()
-        plt.savefig(join_strings(self.fig_save_dir, self.fig_paths["trust_map"],"trust_vs_wavelength.png"),dpi = 300)
-        # plt.show()
+        fig = plt.figure()
+        ax = plt.gca()
+        
+        # Plot with improved styling
+        ax.plot(wavelengths, [1/x for x in trust_with_wave], color='#3288BD', label='All wavelengths', linewidth=0.75)
+        ax.plot(filtered_wave, [1/x for x in filtered_trust_with_wave], color='#D53E4F', label='Bands used for processing', linewidth=0.75)
+        
+        # Customize axes
+        ax.set_xlabel('Wavelength (µm)')
+        ax.set_ylabel('Signal to Noise ($\mu$/$\sigma$)')
+        
+        # Set x-axis ticks
+        ax.set_xlim(0, 5.5)
+        ax.xaxis.set_major_locator(plt.MultipleLocator(0.5))
+        ax.xaxis.set_minor_locator(plt.MultipleLocator(0.1))
+        
+        # Set y-axis to start at 0
+        ymin = 0
+        ymax = max([1/x for x in trust_with_wave])
+        # Round ymax up to nearest multiple of 100 for cleaner ticks
+        ymax = np.ceil(ymax / 100) * 100
+        ax.set_ylim(ymin, ymax)
+        
+        # Set major ticks every 100, minor every 20
+        ax.yaxis.set_major_locator(plt.MultipleLocator(100))
+        ax.yaxis.set_minor_locator(plt.MultipleLocator(20))
+        
+        # Add grid with reduced density
+        ax.grid(True, which='major', alpha=0.3, linewidth=0.5)
+        ax.grid(True, which='minor', alpha=0.15, linewidth=0.5)
+        
+        # Customize legend
+        ax.legend(frameon=True, fancybox=False, edgecolor='black', 
+                 bbox_to_anchor=(1.0, 1.0), loc='upper right')
+        
+        plt.tight_layout()
+        
+        plt.savefig(join_strings(self.fig_save_dir, self.fig_paths["trust_map"],"trust_vs_wavelength.png"), 
+                   dpi=600, bbox_inches='tight', pad_inches=0.01)
         plt.close()
 
         cube_times, cube_avgs, cube_avgs_processed = zip(*sorted(zip(cube_times, cube_avgs, cube_avgs_processed)))
-        fig = plt.figure(figsize = [16,9])
-        plt.title("Trust Mapping vs Time")
-        plt.xlabel("Year")
-
-        plt.ylabel("std/mean")
+        
+        # Create time-based plot with same styling
+        fig = plt.figure()
+        ax = plt.gca()
+        
+        ax.plot(cube_times, [1/x for x in cube_avgs], color='#3288BD', label='All wavelengths', linewidth=0.75)
+        ax.plot(cube_times, [1/x for x in cube_avgs_processed], color='#D53E4F', label='Bands used for processing', linewidth=0.75)
+        
+        ax.set_xlabel('Year')
+        ax.set_ylabel('Signal to Noise ($\mu$/$\sigma$)')
+        
+        # Set x-axis ticks
         min_year = int(np.min(cube_times))
         max_year = int(np.max(cube_times)) + 1
-        plt.xticks(np.arange(min_year, max_year + 0.1,0.25), minor = True)
-        plt.xticks(np.arange(min_year, max_year + 0.1,1), minor = False)
-        plt.plot(cube_times, cube_avgs, label = "all wavelengths")
-        plt.plot(cube_times, cube_avgs_processed, label = "bands used for processing")
-        plt.legend()
-        plt.savefig(join_strings(self.fig_save_dir, self.fig_paths["trust_map"],"trust_vs_time.png"),dpi = 300)
-        # plt.show()
+        ax.xaxis.set_major_locator(plt.MultipleLocator(1.0))
+        ax.xaxis.set_minor_locator(plt.MultipleLocator(0.25))
+        
+        # Set y-axis to start at 0 with improved tick spacing
+        ymin = 0
+        ymax = max([1/x for x in cube_avgs_processed])
+        # Round ymax up to nearest multiple of 100 for cleaner ticks
+        ymax = np.ceil(ymax / 100) * 100
+        ax.set_ylim(ymin, ymax)
+        
+        # Set major ticks every 100, minor every 20
+        ax.yaxis.set_major_locator(plt.MultipleLocator(100))
+        ax.yaxis.set_minor_locator(plt.MultipleLocator(20))
+        
+        # Add grid with reduced density
+        ax.grid(True, which='major', alpha=0.3, linewidth=0.5)
+        ax.grid(True, which='minor', alpha=0.15, linewidth=0.5)
+        
+        # Customize legend
+        ax.legend(frameon=True, fancybox=False, edgecolor='black',
+                 bbox_to_anchor=(1.0, 1.0), loc='upper right')
+        
+        plt.tight_layout()
+        
+        plt.savefig(join_strings(self.fig_save_dir, self.fig_paths["trust_map"],"trust_vs_time.png"),
+                   dpi=600, bbox_inches='tight', pad_inches=0.01)
         plt.close()
 
         self.data["global_analysis"]["trust_map"] = trust
         self.save(False)
+
+    def stacked_u_vs_wave(self, cube_list=None):
+        """
+        Creates a stacked plot of u_vs_wavelength for multiple cubes.
+        
+        Parameters
+        ----------
+        cube_list : list, optional
+            List of cube names to plot. If None, uses default cubes.
+            
+        Returns
+        -------
+        None
+            Saves the figure to the holistic_stats subfolder.
+        """
+        if cube_list is None:
+            # Default cubes that show interesting features or represent different periods
+            cube_list = ["C1477456872_1", "C1559103132_1", "C1814906506_1"]
+        
+        # Set up publication-ready style
+        plt.style.use('default')
+        plt.rcParams.update({
+            'font.family': 'Times New Roman',
+            'mathtext.fontset': 'stix',
+            'font.size': 12,  # Increased from 8
+            'axes.labelsize': 14,  # Increased from 9
+            'axes.titlesize': 14,  # Increased from 10
+            'xtick.labelsize': 12,  # Increased from 8
+            'ytick.labelsize': 12,  # Increased from 8
+            'legend.fontsize': 12,  # Increased from 8
+            'figure.titlesize': 14,  # Increased from 10
+            'axes.linewidth': 1.0,  # Increased from 0.5
+            'axes.edgecolor': 'black',
+            'grid.alpha': 0.3,
+            'grid.linewidth': 0.5,
+        })
+        
+        # Create figure with subplots stacked vertically
+        fig, axs = plt.subplots(len(cube_list), 1, figsize=(12, 4.7*len(cube_list)), sharex=False)
+        if len(cube_list) == 1:
+            axs = [axs]  # Make it iterable for single cube case
+            
+        # Add title to figure
+        fig.suptitle("Seasonal Change in Limb Profiles vs. Wavelength", 
+                    fontsize=16,  # Increased from 14
+                    y=0.94)  # Lowered from 0.98
+        
+        for idx, (cube_name, ax) in enumerate(zip(cube_list, axs)):
+            if cube_name not in self.data:
+                print(f"Warning: Cube {cube_name} not found in data")
+                continue
+                
+            cube_data = self.data[cube_name]
+            shift = 0
+            
+            # Collect all wavelengths and values
+            wavelengths = []
+            north_values = []
+            south_values = []
+            
+            # Process data for this cube
+            for plot_index, (wave_band, wave_data) in enumerate(cube_data.items()):
+                if "µm_" not in wave_band:
+                    shift += 1
+                    continue
+                if plot_index in self.unusable_bands or (plot_index - shift + 1 > 96 and plot_index - shift + 1 < 108):
+                    continue
+                
+                wavelength = float(wave_band.split("_")[0].replace("µm", ""))
+                
+                # Get the north and south data
+                try:
+                    nu1 = wave_data["north_side"]["fit"]["quadratic"]["optimal_fit"]["fit_params"]["u1"]
+                    nu2 = wave_data["north_side"]["fit"]["quadratic"]["optimal_fit"]["fit_params"]["u2"]
+                    north_val = nu1 + nu2
+                except:
+                    north_val = np.nan
+                try:
+                    su1 = wave_data["south_side"]["fit"]["quadratic"]["optimal_fit"]["fit_params"]["u1"]
+                    su2 = wave_data["south_side"]["fit"]["quadratic"]["optimal_fit"]["fit_params"]["u2"]
+                    south_val = su1 + su2
+                except:
+                    south_val = np.nan
+                
+                wavelengths.append(wavelength)
+                north_values.append(north_val)
+                south_values.append(south_val)
+            
+            # Convert to numpy arrays for easier manipulation
+            wavelengths = np.array(wavelengths)
+            north_values = np.array(north_values)
+            south_values = np.array(south_values)
+            
+            # Sort all arrays by wavelength
+            sort_idx = np.argsort(wavelengths)
+            wavelengths = wavelengths[sort_idx]
+            north_values = north_values[sort_idx]
+            south_values = south_values[sort_idx]
+            
+            # Find gaps in wavelength data
+            gaps = np.where(np.diff(wavelengths) > 0.1)[0]
+            
+            # Plot data segments with connecting dashed lines
+            start_idx = 0
+            for gap_idx in gaps:
+                # Plot solid lines for the current segment
+                ax.plot(wavelengths[start_idx:gap_idx+1], north_values[start_idx:gap_idx+1], 
+                       color=(1, 0.78, 0.33), linewidth=2)  # Increased from 1
+                ax.plot(wavelengths[start_idx:gap_idx+1], south_values[start_idx:gap_idx+1], 
+                       color=(0.23, 0.54, 0.54), linewidth=2)  # Increased from 1
+                
+                # Plot dashed lines connecting to next segment
+                if gap_idx + 1 < len(wavelengths):
+                    ax.plot([wavelengths[gap_idx], wavelengths[gap_idx+1]], 
+                           [north_values[gap_idx], north_values[gap_idx+1]], 
+                           color=(1, 0.78, 0.33), linestyle='--', linewidth=1.5, alpha=0.5)  # Increased from 0.75
+                    ax.plot([wavelengths[gap_idx], wavelengths[gap_idx+1]], 
+                           [south_values[gap_idx], south_values[gap_idx+1]], 
+                           color=(0.23, 0.54, 0.54), linestyle='--', linewidth=1.5, alpha=0.5)  # Increased from 0.75
+                
+                start_idx = gap_idx + 1
+            
+            # Plot the final segment
+            if start_idx < len(wavelengths):
+                ax.plot(wavelengths[start_idx:], north_values[start_idx:], 
+                       color=(1, 0.78, 0.33), linewidth=2)  # Increased from 1
+                ax.plot(wavelengths[start_idx:], south_values[start_idx:], 
+                       color=(0.23, 0.54, 0.54), linewidth=2)  # Increased from 1
+            
+            # Customize this subplot
+            ax.set_xlim(0.25, 3.25)
+            ax.set_ylim(-2.5, 0.75)  # Set consistent y-axis limits
+            ax.set_ylabel("µ1 + µ2", fontsize=14)  # Increased from 9
+            ax.axhline(y=0, color='black', linestyle='--', alpha=0.3, linewidth=1.5)  # Increased from 0.75
+            
+            # Set up grid
+            ax.grid(True, which='major', alpha=0.15, linestyle='-', linewidth=0.5)
+            ax.grid(True, which='minor', alpha=0.07, linestyle='-', linewidth=0.5)
+            
+            # Configure ticks for all plots
+            ax.xaxis.set_major_locator(plt.MultipleLocator(0.25))
+            ax.xaxis.set_minor_locator(plt.MultipleLocator(0.05))
+            ax.yaxis.set_major_locator(plt.MultipleLocator(0.5))
+            ax.yaxis.set_minor_locator(plt.MultipleLocator(0.1))
+            ax.set_xlabel("Wavelength (µm)", fontsize=14)  # Added to all plots
+            
+            # Add cube name and date to top right
+            cube_time = self.get_time(cube_data["meta"]["cube_vis"]["time"])
+            ax.text(0.98, 0.98, f"{cube_name} ({cube_time:.2f})", 
+                   transform=ax.transAxes, fontsize=12,  # Increased from 9
+                   verticalalignment='top', horizontalalignment='right')
+            
+            # Add limb darkening/brightening text
+            ax.text(0.5, 0.95, "Limb Darkening", transform=ax.transAxes,
+                   ha='center', va='top', fontsize=12)  # Increased from 9
+            ax.text(0.5, 0.05, "Limb Brightening", transform=ax.transAxes,
+                   ha='center', va='top', fontsize=12)  # Increased from 9
+        
+        # Create legend at the bottom of figure, centered to plot area
+        lines = [plt.Line2D([], [], color=(1, 0.78, 0.33), linewidth=2, label="North | µ1 + µ2"),
+                plt.Line2D([], [], color=(0.23, 0.54, 0.54), linewidth=2, label="South | µ1 + µ2")]
+        # Calculate legend position based on plot area
+        legend = fig.legend(handles=lines, fontsize=12, frameon=True, fancybox=False, edgecolor='black',
+                          bbox_to_anchor=(0.5, 0.02), loc='lower center', ncol=2,
+                          bbox_transform=fig.transFigure)  # Added bbox_transform
+        
+        # Adjust layout with space at bottom for legend and reduced top space
+        plt.subplots_adjust(hspace=0.25, left=0.1, right=0.95, top=0.92, bottom=0.09)  # Adjusted top to 0.93 for title
+        
+        # Create holistic_stats directory if it doesn't exist
+        save_dir = join_strings(self.fig_save_dir, "holistic_stats")
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+            
+        # Save figure
+        cube_names = "_".join(cube_list)
+        plt.savefig(join_strings(save_dir, f"stacked_u_vs_wave_{cube_names}.png"), 
+                   dpi=600, bbox_inches='tight', pad_inches=0.02)
+        plt.close()
 
