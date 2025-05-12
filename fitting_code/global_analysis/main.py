@@ -1,8 +1,10 @@
 from .analyze_trends import trend_analysis
 from fitting_code.global_analysis.distribution_plots import plot_limb_darkening_distribution
+from fitting_code.global_analysis.flowchart import create_flowchart
+
 def derive_all_trends(devEnvironment: bool = True):
+    # create_flowchart()
     a = trend_analysis(devEnvironment=devEnvironment)
-    
     a.stacked_u_vs_wave()
     a.plot_transitional_period()
 

@@ -496,7 +496,7 @@ class trend_analysis:
         """
         if cube_list is None:
             # Default cubes that show interesting features or represent different periods
-            cube_list = ["C1477456872_1", "C1559103132_1", "C1814906506_1"]
+            cube_list = ["C1477456872_1", "C1519682951_1", "C1560489660_1","C1629951950_1"]
         
         # Set up publication-ready style
         plt.style.use('default')

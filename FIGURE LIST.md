@@ -35,6 +35,7 @@ Purpose is to show evolution, and also the earlier transition in upper atmospher
 - Not detailed in current text but referenced
 - Gen in Python to use cursor
 
+
 7.**Destriping Figure**
 
 - Shows destriped data
