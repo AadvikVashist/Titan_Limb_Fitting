@@ -26,6 +26,10 @@ before using them to replace saved profiles.
 plot or file access. All 96 bands from the first reference cube match the saved
 arrays exactly under the locked environment.
 
+`fitting.optimizer` holds interpolation, smoothing, quadratic fitting,
+covariance, and R² selection. It returns all three candidates and the selected
+fit. The accepted package-upgrade tolerances are recorded in decision 0002.
+
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
 

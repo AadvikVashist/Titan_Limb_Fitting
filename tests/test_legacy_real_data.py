@@ -8,9 +8,10 @@ from typing import cast
 import numpy as np
 import pytest
 
+from titan_limb.fitting.optimizer import fit_quadratic_profile
 from titan_limb.io.legacy import read_selected_fit_pickle
 from titan_limb.io.vims import find_cube_pair, load_cube_pair
-from titan_limb.models.core import Hemisphere
+from titan_limb.models.core import Hemisphere, SmoothingMethod
 from titan_limb.processing.destripe import destripe_visible
 from titan_limb.processing.geometry import find_image_center, radial_line_indices
 
@@ -25,6 +26,8 @@ SOUTH_INTENSITY_CENTER = 0.06403271289245795
 SOUTH_U1 = 0.31494449405482283
 SOUTH_U2 = -0.28774366440771537
 SOUTH_R_SQUARED = 0.2744249400699411
+FIT_REFERENCE_CUBES = ("C1477456872_1", "C1649210035_1", "C1875658704_1")
+FIT_REFERENCE_BANDS = (1, 100, 200, 352)
 
 
 def legacy_selected_dir() -> Path:
@@ -97,3 +100,70 @@ def test_reference_visible_cube_destriping() -> None:
     for band in range(1, 97):
         actual = destripe_visible(visible[band], visible.ground)
         np.testing.assert_array_equal(actual, expected_bands[band - 1])
+
+
+@pytest.mark.real_data
+def test_reference_first_band_quadratic_fits() -> None:
+    path = legacy_selected_dir() / f"{REFERENCE_CUBE}.pkl"
+    with path.open("rb") as source:
+        band = pickle.load(source)["0.35054µm_1"]
+
+    for side_name in ("north_side", "south_side"):
+        side = band[side_name]
+        actual = fit_quadratic_profile(
+            np.asarray(side["emission_angles"]),
+            np.asarray(side["brightness_values"]),
+        ).optimal
+        expected = side["fit"]["quadratic"]["optimal_fit"]
+        parameters = expected["fit_params"]
+        assert actual.intensity_center == pytest.approx(parameters["I_0"], abs=3e-8)
+        assert actual.u1 == pytest.approx(parameters["u1"], abs=3e-8)
+        assert actual.u2 == pytest.approx(parameters["u2"], abs=3e-8)
+        assert actual.r_squared == pytest.approx(expected["r2"], abs=5e-9)
+        np.testing.assert_allclose(
+            np.asarray(actual.covariance).reshape(3, 3),
+            expected["covariance_matrix"],
+            rtol=0,
+            atol=7e-12,
+        )
+
+
+@pytest.mark.real_data
+def test_reference_fits_across_time_and_channels() -> None:
+    for cube_id in FIT_REFERENCE_CUBES:
+        with (legacy_selected_dir() / f"{cube_id}.pkl").open("rb") as source:
+            cube = pickle.load(source)
+        by_band = {
+            int(key.rsplit("_", 1)[1]): value
+            for key, value in cube.items()
+            if "µm_" in key
+        }
+        for band_number in FIT_REFERENCE_BANDS:
+            for side_name in ("north_side", "south_side"):
+                side = by_band[band_number][side_name]
+                actual = fit_quadratic_profile(
+                    np.asarray(side["emission_angles"]),
+                    np.asarray(side["brightness_values"]),
+                ).optimal
+                expected = side["fit"]["quadratic"]["optimal_fit"]
+                parameters = expected["fit_params"]
+                expected_method = (
+                    SmoothingMethod.GAUSSIAN
+                    if "sigma" in expected
+                    else SmoothingMethod.MOVING_AVERAGE
+                    if "window" in expected
+                    else SmoothingMethod.INTERPOLATED
+                )
+                assert actual.method is expected_method
+                assert actual.intensity_center == pytest.approx(
+                    parameters["I_0"], abs=2e-7
+                )
+                assert actual.u1 == pytest.approx(parameters["u1"], abs=2e-7)
+                assert actual.u2 == pytest.approx(parameters["u2"], abs=2e-7)
+                assert actual.r_squared == pytest.approx(expected["r2"], abs=5e-8)
+                np.testing.assert_allclose(
+                    np.asarray(actual.covariance),
+                    np.asarray(expected["covariance_matrix"]).reshape(-1),
+                    rtol=0,
+                    atol=1e-7,
+                )
