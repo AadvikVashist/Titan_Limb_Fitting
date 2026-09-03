@@ -51,6 +51,16 @@ Convert the saved radial profiles in the same way:
 just migrate-profiles /absolute/path/to/Titan_Limb_Fitting/data/sorted_and_filtered
 ```
 
+Audit the converted fits before analysis:
+
+```bash
+just audit-fits
+```
+
+The default audit rejects failed or malformed fits and sends negative-R² fits
+to review. Optional R² and coefficient limits remain off until scientific
+review sets them.
+
 ## Current migration rule
 
 Do not edit or delete legacy numerical code until the matching new module has

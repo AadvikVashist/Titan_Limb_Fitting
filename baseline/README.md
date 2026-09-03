@@ -26,3 +26,6 @@ ignored `artifacts/` directory.
 `profiles-summary.json` records the matching conversion of all saved sorted and
 filtered radial profiles. Each Parquet row keeps one profile's pixel rows,
 columns, distances, emission angles, and brightness values as typed lists.
+
+`fit-quality-summary.json` records the default structural audit and shows the
+effect of several possible R² and coefficient rules without choosing one.

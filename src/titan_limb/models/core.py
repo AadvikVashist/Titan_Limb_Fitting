@@ -33,3 +33,19 @@ class Hemisphere(StrEnum):
 class FitFailureReason(StrEnum):
     MISSING_OPTIMAL_FIT = "missing_optimal_fit"
     MISSING_PARAMETERS = "missing_parameters"
+
+
+class QualityStatus(StrEnum):
+    ELIGIBLE = "eligible"
+    REVIEW = "review"
+    INELIGIBLE = "ineligible"
+
+
+class FitQualityReason(StrEnum):
+    FIT_FAILED = "fit_failed"
+    TOO_FEW_POINTS = "too_few_points"
+    NON_FINITE_VALUE = "non_finite_value"
+    INVALID_COVARIANCE = "invalid_covariance"
+    NEGATIVE_R_SQUARED = "negative_r_squared"
+    R_SQUARED_BELOW_POLICY = "r_squared_below_policy"
+    COEFFICIENT_OUTSIDE_POLICY = "coefficient_outside_policy"

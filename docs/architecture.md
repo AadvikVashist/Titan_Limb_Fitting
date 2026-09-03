@@ -30,6 +30,10 @@ arrays exactly under the locked environment.
 covariance, and R² selection. It returns all three candidates and the selected
 fit. The accepted package-upgrade tolerances are recorded in decision 0002.
 
+`fitting.quality` applies hard validity checks and separate review flags. Global
+analysis may use only `eligible` rows. No R² or coefficient cutoff is active by
+default; those values need a stated scientific choice.
+
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
 

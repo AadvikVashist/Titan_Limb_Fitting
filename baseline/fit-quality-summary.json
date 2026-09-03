@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "source": "artifacts/processed/legacy-selected-fits.parquet",
+  "default_policy": {
+    "minimum_profile_points": 6,
+    "minimum_r_squared": null,
+    "maximum_absolute_coefficient": null
+  },
+  "default_counts": {
+    "eligible": 19900,
+    "review": 399,
+    "ineligible": 117
+  },
+  "review_reason_counts": {
+    "negative_r_squared": 399
+  },
+  "candidate_policy_impact": {
+    "minimum_r_squared_0.25": {"eligible": 17860, "review": 2439},
+    "minimum_r_squared_0.50": {"eligible": 15654, "review": 4645},
+    "minimum_r_squared_0.75": {"eligible": 12925, "review": 7374},
+    "minimum_r_squared_0.90": {"eligible": 10080, "review": 10219},
+    "maximum_absolute_coefficient_10": {"eligible": 19642, "review": 657}
+  }
+}

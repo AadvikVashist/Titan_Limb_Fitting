@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 
 from titan_limb.config import DEFAULT_CONFIG_PATH, load_settings
+from titan_limb.fitting.quality import FitQualityPolicy, audit_fit_parquet
 from titan_limb.io.legacy import read_selected_fit_directory, write_selected_fit_parquet
 from titan_limb.io.legacy_profiles import write_profile_directory
 from titan_limb.manifest import (
@@ -19,7 +20,9 @@ from titan_limb.models.core import FitStatus
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 data_app = typer.Typer(no_args_is_help=True)
+fits_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
+app.add_typer(fits_app, name="fits")
 
 
 @app.command()
@@ -55,6 +58,25 @@ def migrate_profiles_command(
     typer.echo(f"files={report.files}")
     typer.echo(f"rows={report.rows}")
     typer.echo(f"points={report.points}")
+    typer.echo(f"output={output.resolve()}")
+
+
+@fits_app.command("audit")
+def audit_fits_command(
+    source: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/fit-quality.parquet"
+    ),
+    minimum_r_squared: Annotated[float | None, typer.Option()] = None,
+    maximum_absolute_coefficient: Annotated[float | None, typer.Option()] = None,
+) -> None:
+    policy = FitQualityPolicy(
+        minimum_r_squared=minimum_r_squared,
+        maximum_absolute_coefficient=maximum_absolute_coefficient,
+    )
+    result = audit_fit_parquet(source, output, policy)
+    for row in result.group_by("quality_status").len().sort("quality_status").rows():
+        typer.echo(f"{row[0]}={row[1]}")
     typer.echo(f"output={output.resolve()}")
 
 

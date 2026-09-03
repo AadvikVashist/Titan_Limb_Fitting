@@ -35,5 +35,15 @@ pickles stay unchanged.
 The real-data check also rebuilds all 96 visible bands for the first reference
 cube and requires exact agreement with the saved destriped arrays.
 
+## Audit fit quality
+
+```bash
+just audit-fits
+```
+
+The default audit yields 19,900 eligible rows, 399 review rows with negative
+R², and 117 ineligible failed rows. It keeps every row and writes every reason.
+Candidate threshold effects are frozen in `baseline/fit-quality-summary.json`.
+
 Full scientific reproduction commands will follow as each old numerical stage
 gets a tested replacement.

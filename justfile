@@ -35,3 +35,6 @@ migrate-profiles source_dir output="artifacts/processed/legacy-profiles.parquet"
 
 reference-test source_dir:
     TITAN_LEGACY_SELECTED_DIR="{{source_dir}}" MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run pytest -m real_data
+
+audit-fits source="artifacts/processed/legacy-selected-fits.parquet" output="artifacts/processed/fit-quality.parquet":
+    UV_CACHE_DIR=.uv-cache uv run titan-limb fits audit --source "{{source}}" --output "{{output}}"
