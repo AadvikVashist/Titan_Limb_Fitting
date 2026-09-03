@@ -25,5 +25,12 @@ The reference test checks known values from cube `C1477456872_1`. The conversion
 produces 20,416 rows, including all 117 saved failures. See
 `baseline/selected-fits-summary.json` for the frozen counts and table schema.
 
+```bash
+just migrate-profiles /absolute/path/to/Titan_Limb_Fitting/data/sorted_and_filtered
+```
+
+This creates 163,328 profile rows with 5,562,272 selected points. The source
+pickles stay unchanged.
+
 Full scientific reproduction commands will follow as each old numerical stage
 gets a tested replacement.

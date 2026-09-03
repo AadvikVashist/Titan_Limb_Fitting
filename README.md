@@ -45,6 +45,12 @@ just migrate-selected-fits /absolute/path/to/Titan_Limb_Fitting/data/selected_fi
 This reads the old pickles without changing them and writes one compressed,
 typed Parquet table to `artifacts/processed/legacy-selected-fits.parquet`.
 
+Convert the saved radial profiles in the same way:
+
+```bash
+just migrate-profiles /absolute/path/to/Titan_Limb_Fitting/data/sorted_and_filtered
+```
+
 ## Current migration rule
 
 Do not edit or delete legacy numerical code until the matching new module has

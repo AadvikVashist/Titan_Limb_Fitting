@@ -30,5 +30,8 @@ validate-manifest data_dir manifest="artifacts/reports/data-manifest.json":
 migrate-selected-fits source_dir output="artifacts/processed/legacy-selected-fits.parquet":
     MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb data migrate-selected-fits --source-dir "{{source_dir}}" --output "{{output}}"
 
+migrate-profiles source_dir output="artifacts/processed/legacy-profiles.parquet":
+    MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb data migrate-profiles --source-dir "{{source_dir}}" --output "{{output}}"
+
 reference-test source_dir:
     TITAN_LEGACY_SELECTED_DIR="{{source_dir}}" MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run pytest -m real_data

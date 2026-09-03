@@ -22,3 +22,7 @@ include or alter those source-checkout changes.
 `selected-fits-summary.json` records the row counts and schema from converting
 all 29 saved selected-fit pickles. The generated Parquet file stays under the
 ignored `artifacts/` directory.
+
+`profiles-summary.json` records the matching conversion of all saved sorted and
+filtered radial profiles. Each Parquet row keeps one profile's pixel rows,
+columns, distances, emission angles, and brightness values as typed lists.

@@ -7,6 +7,7 @@ import typer
 
 from titan_limb.config import DEFAULT_CONFIG_PATH, load_settings
 from titan_limb.io.legacy import read_selected_fit_directory, write_selected_fit_parquet
+from titan_limb.io.legacy_profiles import write_profile_directory
 from titan_limb.manifest import (
     ValidationStatus,
     create_manifest,
@@ -40,6 +41,20 @@ def manifest_command(
     manifest = create_manifest(data_dir)
     write_manifest(manifest, output)
     typer.echo(f"files={len(manifest.entries)}")
+    typer.echo(f"output={output.resolve()}")
+
+
+@data_app.command("migrate-profiles")
+def migrate_profiles_command(
+    source_dir: Annotated[Path, typer.Option(exists=True, file_okay=False)],
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/legacy-profiles.parquet"
+    ),
+) -> None:
+    report = write_profile_directory(source_dir, output)
+    typer.echo(f"files={report.files}")
+    typer.echo(f"rows={report.rows}")
+    typer.echo(f"points={report.points}")
     typer.echo(f"output={output.resolve()}")
 
 

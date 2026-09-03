@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "source_pattern": "data/sorted_and_filtered/C*.pkl",
+  "cube_count": 29,
+  "band_count": 352,
+  "slants_per_band": 16,
+  "profile_count": 163328,
+  "point_count": 5562272,
+  "filtered_profile_count": 161216,
+  "minimum_points_per_profile": 11,
+  "maximum_points_per_profile": 59,
+  "parquet_bytes": 26796756,
+  "parquet_compression": "zstd"
+}
