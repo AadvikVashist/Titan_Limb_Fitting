@@ -1,6 +1,5 @@
 """Typed SRTC++ table ingestion and fixed-seed model checks."""
 
-import json
 import re
 from pathlib import Path
 
@@ -16,6 +15,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
+
+from titan_limb.io.atomic import atomic_write_json, atomic_write_parquet
+from titan_limb.provenance import RunDefinition, RunRecorder
+from titan_limb.rejections import RejectionKind, RejectionLedger
+from titan_limb.validation.gates import equal_check, require_gate, write_gate_report
 
 FEATURES = (
     "lower_haze",
@@ -35,6 +39,10 @@ MINIMUM_PEAK_BRIGHTNESS = 60.0
 FILE_PATTERN = re.compile(
     r"^Aadvik0\.93_(?P<values>[0-9._]+)_p000\.colorCCD\.Jcube\.hazecolor\.tif$"
 )
+SRTC_INVENTORY_SCHEMA = {
+    "file_name": pl.String,
+    **dict.fromkeys(FEATURES, pl.Float64),
+}
 
 
 def read_srtc_table(path: Path) -> pl.DataFrame:
@@ -60,20 +68,46 @@ def read_srtc_table(path: Path) -> pl.DataFrame:
     )
 
 
-def inventory_srtc_images(image_dir: Path) -> pl.DataFrame:
-    """Parse the six input values encoded in each SRTC++ TIFF name."""
+def inventory_srtc_images_with_rejections(
+    image_dir: Path,
+) -> tuple[pl.DataFrame, RejectionLedger]:
+    """Parse SRTC++ names and retain a reason for every rejected TIFF."""
     rows: list[dict[str, str | float]] = []
+    ledger = RejectionLedger()
     for path in sorted(image_dir.glob("*.tif")):
         match = FILE_PATTERN.fullmatch(path.name)
         if match is None:
+            ledger = ledger.with_rejection(
+                RejectionKind.INPUT,
+                path.name,
+                "srtc_inventory",
+                "file_name_does_not_match_srtc_pattern",
+            )
             continue
         values = [float(value) for value in match.group("values").split("_")]
         if len(values) != len(FEATURES):
+            ledger = ledger.with_rejection(
+                RejectionKind.INPUT,
+                path.name,
+                "srtc_inventory",
+                "wrong_parameter_count",
+                f"expected={len(FEATURES)} observed={len(values)}",
+            )
             continue
         rows.append(
             {"file_name": path.name, **dict(zip(FEATURES, values, strict=True))}
         )
-    return pl.from_dicts(rows, infer_schema_length=None)
+    return pl.from_dicts(
+        rows,
+        schema=SRTC_INVENTORY_SCHEMA,
+        infer_schema_length=None,
+    ), ledger
+
+
+def inventory_srtc_images(image_dir: Path) -> pl.DataFrame:
+    """Parse the six input values encoded in each accepted SRTC++ TIFF name."""
+    inventory, _ = inventory_srtc_images_with_rejections(image_dir)
+    return inventory
 
 
 def _read_grayscale(path: Path) -> np.ndarray:
@@ -149,13 +183,16 @@ def fit_srtc_image(
     return float(parameters[1] + parameters[2]), _image_quality(image, emission, mask)
 
 
-def rebuild_srtc_images(image_dir: Path) -> pl.DataFrame:
+def rebuild_srtc_images(
+    image_dir: Path,
+    inventory: pl.DataFrame | None = None,
+) -> pl.DataFrame:
     """Recompute the result table directly from every synthetic TIFF."""
     paths = tuple(sorted(image_dir.glob("*.tif")))
     mask = build_srtc_mask(paths)
     emission = srtc_emission_angles(mask)
     rows: list[dict[str, str | float | bool]] = []
-    inventory = inventory_srtc_images(image_dir)
+    inventory = inventory if inventory is not None else inventory_srtc_images(image_dir)
     parameters = {row["file_name"]: row for row in inventory.iter_rows(named=True)}
     for path in paths:
         if path.name not in parameters:
@@ -240,22 +277,85 @@ def train_srtc_models(table: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
 def write_srtc_analysis(
     csv_path: Path, image_dir: Path, output_dir: Path
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
-    saved = read_srtc_table(csv_path)
-    inventory = inventory_srtc_images(image_dir)
-    table = rebuild_srtc_images(image_dir)
-    comparison = compare_srtc_results(table, saved)
-    metrics, importance = train_srtc_models(table)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    table.write_parquet(output_dir / "srtc-results.parquet")
-    inventory.write_parquet(output_dir / "srtc-image-inventory.parquet")
-    metrics.write_parquet(output_dir / "srtc-model-metrics.parquet")
-    importance.write_parquet(output_dir / "srtc-feature-importance.parquet")
-    report = {
-        "result_rows": table.height,
-        "usable_rows": table.filter(pl.col("usable")).height,
-        "image_rows": inventory.height,
-        "models": metrics.to_dicts(),
-        "saved_comparison": comparison,
+    output_paths = {
+        "results": output_dir / "srtc-results.parquet",
+        "inventory": output_dir / "srtc-image-inventory.parquet",
+        "metrics": output_dir / "srtc-model-metrics.parquet",
+        "importance": output_dir / "srtc-feature-importance.parquet",
+        "report": output_dir / "srtc-report.json",
+        "rejections": output_dir / "srtc-rejections.json",
+        "gate": output_dir / "srtc-validation-gate.json",
     }
-    (output_dir / "srtc-report.json").write_text(json.dumps(report, indent=2) + "\n")
+    recorder = RunRecorder(
+        RunDefinition(
+            command="simulate.srtc",
+            receipt_path=output_dir / "run-receipt.json",
+            project_dir=Path.cwd(),
+            settings={
+                "csv_path": str(csv_path.resolve()),
+                "image_dir": str(image_dir.resolve()),
+                "output_dir": str(output_dir.resolve()),
+            },
+            parameters={
+                "profile_points": SRTC_PROFILE_POINTS,
+                "smoothing_sigma": SRTC_SMOOTHING_SIGMA,
+                "mask_threshold": MASK_THRESHOLD,
+                "maximum_profile_emission_degrees": (MAXIMUM_PROFILE_EMISSION_DEGREES),
+            },
+            inputs=(csv_path, *sorted(image_dir.glob("*.tif"))),
+            outputs=tuple(output_paths.values()),
+            output_schema_versions={
+                "srtc_results": 1,
+                "srtc_inventory": 1,
+                "rejection_ledger": 1,
+                "validation_gate": 1,
+            },
+            rejection_ledger=output_paths["rejections"],
+        )
+    )
+    with recorder:
+        saved = read_srtc_table(csv_path)
+        inventory, ledger = inventory_srtc_images_with_rejections(image_dir)
+        table = rebuild_srtc_images(image_dir, inventory)
+        comparison = compare_srtc_results(table, saved)
+        ledger.write(output_paths["rejections"])
+        recorder.rejection_count = len(ledger.records)
+        gate = write_gate_report(
+            (
+                equal_check(
+                    "rebuilt_rows_match_saved_rows",
+                    comparison["joined_rows"],
+                    saved.height,
+                    "every saved SRTC++ case must join to a rebuilt case",
+                ),
+                equal_check(
+                    "rebuilt_rows_match_inventory_rows",
+                    comparison["joined_rows"],
+                    inventory.height,
+                    "every accepted image must produce one result row",
+                ),
+                equal_check(
+                    "rejected_input_count",
+                    len(ledger.records),
+                    0,
+                    "all SRTC++ TIFF inputs must have valid parameter names",
+                ),
+            ),
+            output_paths["gate"],
+        )
+        require_gate(gate)
+        metrics, importance = train_srtc_models(table)
+        atomic_write_parquet(table, output_paths["results"])
+        atomic_write_parquet(inventory, output_paths["inventory"])
+        atomic_write_parquet(metrics, output_paths["metrics"])
+        atomic_write_parquet(importance, output_paths["importance"])
+        report = {
+            "result_rows": table.height,
+            "usable_rows": table.filter(pl.col("usable")).height,
+            "image_rows": inventory.height,
+            "models": metrics.to_dicts(),
+            "saved_comparison": comparison,
+            "rejected_inputs": len(ledger.records),
+        }
+        atomic_write_json(output_paths["report"], report)
     return metrics, importance

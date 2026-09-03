@@ -7,6 +7,7 @@ import numpy as np
 import polars as pl
 
 from titan_limb.fitting.optimizer import PARAMETER_COUNT, fit_quadratic_profile
+from titan_limb.io.atomic import atomic_write_parquet
 from titan_limb.io.legacy import records_to_frame
 from titan_limb.models.core import (
     Channel,
@@ -82,6 +83,5 @@ def fit_profile_table(profiles: pl.DataFrame) -> pl.DataFrame:
 
 def fit_profile_parquet(source: Path, output: Path) -> pl.DataFrame:
     result = fit_profile_table(pl.read_parquet(source))
-    output.parent.mkdir(parents=True, exist_ok=True)
-    result.write_parquet(output, compression="zstd", statistics=True)
+    atomic_write_parquet(result, output)
     return result

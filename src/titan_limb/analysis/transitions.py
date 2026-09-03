@@ -10,6 +10,7 @@ from scipy.interpolate import PchipInterpolator
 from scipy.ndimage import gaussian_filter1d
 
 from titan_limb.config_bands import BandPolicy
+from titan_limb.io.atomic import atomic_write_parquet
 from titan_limb.io.observations import attach_observation_metadata
 from titan_limb.models.core import Hemisphere, QualityStatus
 
@@ -140,6 +141,5 @@ def write_transition_parquet(
         ),
         pl.read_parquet(observations_path),
     )
-    output.parent.mkdir(parents=True, exist_ok=True)
-    result.write_parquet(output, compression="zstd", statistics=True)
+    atomic_write_parquet(result, output)
     return result

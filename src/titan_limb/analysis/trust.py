@@ -4,6 +4,8 @@ from pathlib import Path
 
 import polars as pl
 
+from titan_limb.io.atomic import atomic_write_parquet
+
 MINIMUM_TRUSTED_FRACTION = 0.8
 
 
@@ -60,6 +62,5 @@ def write_band_trust_parquet(
         pl.read_parquet(quality_path),
         pl.read_parquet(observations_path),
     )
-    output.parent.mkdir(parents=True, exist_ok=True)
-    result.write_parquet(output, compression="zstd", statistics=True)
+    atomic_write_parquet(result, output)
     return result

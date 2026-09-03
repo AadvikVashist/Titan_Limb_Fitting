@@ -107,3 +107,4 @@ def test_write_seasonal_parquet(tmp_path: Path) -> None:
     assert summary.height == 6
     assert pl.read_parquet(cube_output).equals(cubes)
     assert pl.read_parquet(summary_output).equals(summary)
+    assert summary_output.with_suffix(".run.json").is_file()

@@ -5,7 +5,9 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-DEFAULT_BAND_CONFIG = Path("configs/bands.toml")
+from titan_limb.config import PACKAGE_CONFIG_DIR
+
+DEFAULT_BAND_CONFIG = PACKAGE_CONFIG_DIR / "bands.toml"
 FIRST_BAND = 1
 LAST_BAND = 352
 

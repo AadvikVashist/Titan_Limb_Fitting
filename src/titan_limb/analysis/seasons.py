@@ -7,6 +7,8 @@ import polars as pl
 from numpy.typing import NDArray
 
 from titan_limb.config_seasons import SeasonPolicy
+from titan_limb.io.atomic import atomic_write_parquet
+from titan_limb.provenance import RunDefinition, RunRecorder
 
 FloatArray = NDArray[np.float64]
 SEASON_ORDER = ["northern winter", "northern spring", "northern summer"]
@@ -112,10 +114,26 @@ def write_seasonal_parquet(
     summary_output: Path,
     policy: SeasonPolicy,
 ) -> tuple[pl.DataFrame, pl.DataFrame]:
-    cube_table = build_seasonal_cube_table(pl.read_parquet(asymmetry_path), policy)
-    summary = summarize_seasonal_groups(cube_table, policy)
-    cube_output.parent.mkdir(parents=True, exist_ok=True)
-    summary_output.parent.mkdir(parents=True, exist_ok=True)
-    cube_table.write_parquet(cube_output, compression="zstd", statistics=True)
-    summary.write_parquet(summary_output, compression="zstd", statistics=True)
+    receipt_path = summary_output.with_suffix(".run.json")
+    recorder = RunRecorder(
+        RunDefinition(
+            command="analyze.seasons",
+            receipt_path=receipt_path,
+            project_dir=Path.cwd(),
+            settings={
+                "asymmetry_path": str(asymmetry_path.resolve()),
+                "cube_output": str(cube_output.resolve()),
+                "summary_output": str(summary_output.resolve()),
+            },
+            parameters=policy.model_dump(mode="json"),
+            inputs=(asymmetry_path,),
+            outputs=(cube_output, summary_output),
+            output_schema_versions={"seasonal_cubes": 1, "seasonal_summary": 1},
+        )
+    )
+    with recorder:
+        cube_table = build_seasonal_cube_table(pl.read_parquet(asymmetry_path), policy)
+        summary = summarize_seasonal_groups(cube_table, policy)
+        atomic_write_parquet(cube_table, cube_output)
+        atomic_write_parquet(summary, summary_output)
     return cube_table, summary

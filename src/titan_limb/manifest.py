@@ -1,14 +1,14 @@
 """Deterministic data manifests for preservation and integrity checks."""
 
 import hashlib
-import os
-import tempfile
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict
+
+from titan_limb.io.atomic import atomic_write_text
 
 HASH_CHUNK_BYTES = 8 * 1024 * 1024
 MANIFEST_SCHEMA_VERSION = 1
@@ -80,16 +80,8 @@ def create_manifest(root: Path) -> DataManifest:
 
 
 def write_manifest(manifest: DataManifest, output: Path) -> None:
-    output = output.resolve()
-    output.parent.mkdir(parents=True, exist_ok=True)
     payload = manifest.model_dump_json(indent=2)
-    with tempfile.NamedTemporaryFile(
-        "w", encoding="utf-8", dir=output.parent, delete=False
-    ) as temporary:
-        temporary.write(payload)
-        temporary.write("\n")
-        temporary_path = Path(temporary.name)
-    os.replace(temporary_path, output)
+    atomic_write_text(output, payload + "\n")
 
 
 def read_manifest(path: Path) -> DataManifest:

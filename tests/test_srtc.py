@@ -4,13 +4,16 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
+import pytest
 from PIL import Image
 
+import titan_limb.simulations.srtc as srtc_module
 from titan_limb.simulations.srtc import (
     build_srtc_mask,
     compare_srtc_results,
     fit_srtc_image,
     inventory_srtc_images,
+    inventory_srtc_images_with_rejections,
     read_srtc_table,
     rebuild_srtc_images,
     srtc_emission_angles,
@@ -28,6 +31,17 @@ def test_inventory_srtc_images_reads_six_parameters(tmp_path: Path) -> None:
     assert result.height == 1
     assert result.item(0, "lower_haze") == 0.01
     assert result.item(0, "upper_gas") == 0.4
+
+
+def test_inventory_records_rejected_file_names(tmp_path: Path) -> None:
+    Image.fromarray(np.ones((3, 3), dtype=np.uint8)).save(tmp_path / "bad-name.tif")
+
+    inventory, ledger = inventory_srtc_images_with_rejections(tmp_path)
+
+    assert inventory.is_empty()
+    assert len(ledger.records) == 1
+    assert ledger.records[0].identifier == "bad-name.tif"
+    assert ledger.records[0].reason == "file_name_does_not_match_srtc_pattern"
 
 
 def test_rebuild_srtc_image_and_compare_saved_table(tmp_path: Path) -> None:
@@ -91,3 +105,45 @@ def test_train_srtc_models_returns_all_metrics() -> None:
 
     assert metrics.height == 3
     assert importance.height == 6
+
+
+def test_write_srtc_analysis_saves_receipt_gate_and_tables(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "saved.csv"
+    source.write_text("source", encoding="utf-8")
+    image_dir = tmp_path / "images"
+    image_dir.mkdir()
+    output_dir = tmp_path / "output"
+    saved = pl.DataFrame({"usable": [True]})
+    inventory = pl.DataFrame({"file_name": [SRTC_NAME]})
+    table = pl.DataFrame({"usable": [True]})
+    metrics = pl.DataFrame({"model": ["test"], "r_squared": [1.0]})
+    importance = pl.DataFrame({"feature": ["lower_haze"], "importance": [1.0]})
+    comparison = {
+        "joined_rows": 1,
+        "equal_usable_flags": 1,
+        "median_absolute_u_sum_drift": 0.0,
+        "maximum_absolute_u_sum_drift": 0.0,
+    }
+    monkeypatch.setattr(srtc_module, "read_srtc_table", lambda _: saved)
+    monkeypatch.setattr(
+        srtc_module,
+        "inventory_srtc_images_with_rejections",
+        lambda _: (inventory, srtc_module.RejectionLedger()),
+    )
+    monkeypatch.setattr(srtc_module, "rebuild_srtc_images", lambda *_: table)
+    monkeypatch.setattr(srtc_module, "compare_srtc_results", lambda *_: comparison)
+    monkeypatch.setattr(
+        srtc_module, "train_srtc_models", lambda _: (metrics, importance)
+    )
+
+    result_metrics, result_importance = srtc_module.write_srtc_analysis(
+        source, image_dir, output_dir
+    )
+
+    assert result_metrics.equals(metrics)
+    assert result_importance.equals(importance)
+    assert (output_dir / "run-receipt.json").is_file()
+    assert (output_dir / "srtc-validation-gate.json").is_file()
+    assert (output_dir / "srtc-rejections.json").is_file()

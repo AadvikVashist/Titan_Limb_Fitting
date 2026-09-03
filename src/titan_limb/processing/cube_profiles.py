@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import polars as pl
 
+from titan_limb.io.atomic import atomic_write_parquet
 from titan_limb.io.vims import CubePairPaths, VimsCube, load_cube_pair
 from titan_limb.models.core import Channel, Hemisphere
 from titan_limb.processing.destripe import destripe_visible
@@ -128,6 +129,5 @@ def write_selected_profiles_from_paths(
         paths,
         legacy_ir_incidence_source=legacy_ir_incidence_source,
     )
-    output.parent.mkdir(parents=True, exist_ok=True)
-    result.write_parquet(output, compression="zstd", statistics=True)
+    atomic_write_parquet(result, output)
     return result

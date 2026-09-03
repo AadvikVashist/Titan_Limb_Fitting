@@ -1,6 +1,5 @@
 """Compare raw-cube results with the preserved selected-fit data."""
 
-import json
 import pickle
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -9,25 +8,37 @@ from typing import Any, cast
 import numpy as np
 import polars as pl
 
+from titan_limb.io.atomic import atomic_write_json, atomic_write_parquet
 from titan_limb.io.legacy import (
     parse_wavelength_key,
     read_selected_fit_directory,
     records_to_frame,
 )
+from titan_limb.validation.gates import (
+    ValidationGateReport,
+    equal_check,
+    maximum_check,
+    minimum_check,
+    write_gate_report,
+)
 
 
 @dataclass(frozen=True)
 class RawValidationSummary:
+    profile_input_rows: int
+    fit_input_rows: int
+    legacy_profile_rows: int
+    legacy_fit_rows: int
     rows: int
     exact_profiles: int
     changed_profiles: int
     equal_point_counts: int
     equal_fit_status: int
     both_succeeded: int
-    maximum_absolute_u1_drift: float
-    maximum_absolute_u2_drift: float
-    median_absolute_u1_drift: float
-    median_absolute_u2_drift: float
+    maximum_absolute_u1_drift: float | None
+    maximum_absolute_u2_drift: float | None
+    median_absolute_u1_drift: float | None
+    median_absolute_u2_drift: float | None
 
 
 def _profile_rows(source_dir: Path) -> list[dict[str, Any]]:
@@ -108,25 +119,23 @@ def validate_raw_results(
     ).sort("cube_id", "band", "hemisphere")
     successful = checks.filter(pl.col("both_succeeded"))
     exact = checks.get_column("exact_profile").sum()
+    u1_drift = successful.get_column("absolute_u1_drift").to_numpy()
+    u2_drift = successful.get_column("absolute_u2_drift").to_numpy()
     summary = RawValidationSummary(
+        profile_input_rows=profiles.height,
+        fit_input_rows=fits.height,
+        legacy_profile_rows=legacy_profiles.height,
+        legacy_fit_rows=legacy_fits.height,
         rows=checks.height,
         exact_profiles=int(exact),
         changed_profiles=checks.height - int(exact),
         equal_point_counts=int(checks.get_column("equal_point_count").sum()),
         equal_fit_status=int(checks.get_column("equal_fit_status").sum()),
         both_succeeded=successful.height,
-        maximum_absolute_u1_drift=float(
-            np.max(successful.get_column("absolute_u1_drift").to_numpy())
-        ),
-        maximum_absolute_u2_drift=float(
-            np.max(successful.get_column("absolute_u2_drift").to_numpy())
-        ),
-        median_absolute_u1_drift=float(
-            np.median(successful.get_column("absolute_u1_drift").to_numpy())
-        ),
-        median_absolute_u2_drift=float(
-            np.median(successful.get_column("absolute_u2_drift").to_numpy())
-        ),
+        maximum_absolute_u1_drift=float(np.max(u1_drift)) if u1_drift.size else None,
+        maximum_absolute_u2_drift=float(np.max(u2_drift)) if u2_drift.size else None,
+        median_absolute_u1_drift=float(np.median(u1_drift)) if u1_drift.size else None,
+        median_absolute_u2_drift=float(np.median(u2_drift)) if u2_drift.size else None,
     )
     return checks, summary
 
@@ -140,9 +149,79 @@ def write_raw_validation(
     checks, summary = validate_raw_results(
         pl.read_parquet(profiles_path), pl.read_parquet(fits_path), legacy_dir
     )
-    output_dir.mkdir(parents=True, exist_ok=True)
-    checks.write_parquet(output_dir / "raw-validation.parquet")
-    (output_dir / "raw-validation.json").write_text(
-        json.dumps(asdict(summary), indent=2) + "\n"
-    )
+    atomic_write_parquet(checks, output_dir / "raw-validation.parquet")
+    atomic_write_json(output_dir / "raw-validation.json", asdict(summary))
     return summary
+
+
+def write_raw_validation_gate(
+    summary: RawValidationSummary,
+    output: Path,
+    *,
+    maximum_changed_profiles: int | None = None,
+    maximum_u1_drift: float | None = None,
+    maximum_u2_drift: float | None = None,
+) -> ValidationGateReport:
+    """Require complete joins and apply only explicitly supplied drift bounds."""
+    checks = [
+        equal_check(
+            "all_profile_inputs_joined",
+            summary.rows,
+            summary.profile_input_rows,
+            "each rebuilt profile must have one validation row",
+        ),
+        equal_check(
+            "all_legacy_profiles_joined",
+            summary.rows,
+            summary.legacy_profile_rows,
+            "each legacy profile must have one validation row",
+        ),
+        equal_check(
+            "all_fit_inputs_joined",
+            summary.rows,
+            summary.fit_input_rows,
+            "each rebuilt fit must have one validation row",
+        ),
+        equal_check(
+            "all_legacy_fits_joined",
+            summary.rows,
+            summary.legacy_fit_rows,
+            "each legacy fit must have one validation row",
+        ),
+        minimum_check(
+            "successful_fit_pairs",
+            summary.both_succeeded,
+            1,
+            "at least one successful fit pair is required to measure drift",
+        ),
+    ]
+    if maximum_changed_profiles is not None:
+        checks.append(
+            maximum_check(
+                "changed_profiles",
+                summary.changed_profiles,
+                maximum_changed_profiles,
+                "changed profile count exceeds the declared bound",
+            )
+        )
+    if maximum_u1_drift is not None:
+        observed = summary.maximum_absolute_u1_drift
+        checks.append(
+            maximum_check(
+                "maximum_absolute_u1_drift",
+                observed,
+                maximum_u1_drift,
+                "u1 drift exceeds the declared bound",
+            )
+        )
+    if maximum_u2_drift is not None:
+        observed = summary.maximum_absolute_u2_drift
+        checks.append(
+            maximum_check(
+                "maximum_absolute_u2_drift",
+                observed,
+                maximum_u2_drift,
+                "u2 drift exceeds the declared bound",
+            )
+        )
+    return write_gate_report(tuple(checks), output)

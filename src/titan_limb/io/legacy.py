@@ -11,6 +11,7 @@ import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 
+from titan_limb.io.atomic import atomic_write_parquet
 from titan_limb.models.core import (
     FitFailureReason,
     FitStatus,
@@ -178,5 +179,4 @@ def records_to_frame(records: Sequence[LegacyFitRecord]) -> pl.DataFrame:
 def write_selected_fit_parquet(
     records: Sequence[LegacyFitRecord], output: Path
 ) -> None:
-    output.parent.mkdir(parents=True, exist_ok=True)
-    records_to_frame(records).write_parquet(output, compression="zstd", statistics=True)
+    atomic_write_parquet(records_to_frame(records), output)

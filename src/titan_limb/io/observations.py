@@ -9,6 +9,7 @@ from typing import cast
 
 import polars as pl
 
+from titan_limb.io.atomic import atomic_write_parquet
 from titan_limb.models.observation import ObservationRecord
 
 TIME_FORMAT = "%d/%m/%Y at %H:%M:%S"
@@ -148,7 +149,4 @@ def attach_observation_metadata(
 def write_observations_parquet(
     records: tuple[ObservationRecord, ...], output: Path
 ) -> None:
-    output.parent.mkdir(parents=True, exist_ok=True)
-    observations_to_frame(records).write_parquet(
-        output, compression="zstd", statistics=True
-    )
+    atomic_write_parquet(observations_to_frame(records), output)

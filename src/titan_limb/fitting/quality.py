@@ -5,6 +5,7 @@ from pathlib import Path
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field
 
+from titan_limb.io.atomic import atomic_write_parquet
 from titan_limb.models.core import (
     FitQualityReason,
     FitStatus,
@@ -99,6 +100,5 @@ def audit_fit_parquet(
     source: Path, output: Path, policy: FitQualityPolicy
 ) -> pl.DataFrame:
     result = audit_fit_table(pl.read_parquet(source), policy)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    result.write_parquet(output, compression="zstd", statistics=True)
+    atomic_write_parquet(result, output)
     return result

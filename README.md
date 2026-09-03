@@ -22,9 +22,24 @@ or use environment variables:
 ```bash
 export TITAN_DATA_DIR=/absolute/path/to/Titan_Limb_Fitting/data
 export TITAN_ARTIFACT_DIR=/absolute/path/to/output/artifacts
+export TITAN_CONFIG_DIR=/absolute/path/to/policy/configs
 ```
 
-The environment variables take priority over the TOML file.
+The environment variables take priority over the TOML file. Explicit command
+flags take priority over both. The CLI ships its default TOML files, so installed
+commands do not need a source checkout for the standard band and season policy.
+Use one settings file for a run with:
+
+```bash
+uv run titan-limb --config configs/local.toml data manifest
+```
+
+Artifact-producing raw, seasonal, and SRTC++ runs save a typed JSON receipt.
+Each receipt records input and output hashes, resolved paths, parameters, the Git
+revision when available, the `uv.lock` hash, timestamps, schema versions, run
+status, and the rejection-ledger location. Raw resume accepts an old cube result
+only when its receipt and output hashes still match the current inputs and
+settings.
 
 ## Baseline data manifest
 
