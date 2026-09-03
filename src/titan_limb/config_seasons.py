@@ -6,7 +6,9 @@ from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-DEFAULT_SEASON_CONFIG = Path("configs/seasons.toml")
+from titan_limb.config import PACKAGE_CONFIG_DIR
+
+DEFAULT_SEASON_CONFIG = PACKAGE_CONFIG_DIR / "seasons.toml"
 MINIMUM_GROUP_SIZE = 2
 MINIMUM_BOOTSTRAP_RESAMPLES = 100
 

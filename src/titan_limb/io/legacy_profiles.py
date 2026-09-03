@@ -10,6 +10,7 @@ import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 
+from titan_limb.io.atomic import atomic_write_parquet
 from titan_limb.io.legacy import PICKLE_PATTERN, parse_wavelength_key
 from titan_limb.processing.bands import channel_for_band
 from titan_limb.processing.profiles import PIXEL_INDEX_COLUMNS
@@ -113,7 +114,6 @@ def write_profile_directory(source_dir: Path, output: Path) -> ProfileConversion
         raise FileNotFoundError(f"no profile pickle files found in {source_dir}")
     frames = [read_profile_pickle(path) for path in paths]
     table = pl.concat(frames, rechunk=False)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    table.write_parquet(output, compression="zstd", statistics=True)
+    atomic_write_parquet(table, output)
     points = table.select(pl.col("emission_angles").list.len().sum()).item()
     return ProfileConversionReport(files=len(paths), rows=table.height, points=points)

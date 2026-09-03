@@ -1,0 +1,12 @@
+# Saturn and Titan northern vernal equinox:
+# https://science.nasa.gov/solar-system/planets/saturn/saturn-moons/on-titan-the-sky-is-falling/
+northern_vernal_equinox = "2009-08-11T00:00:00Z"
+
+# Saturn and Titan northern summer solstice:
+# https://science.nasa.gov/mission/cassini/grand-finale/grand-finale-orbit-guide/
+northern_summer_solstice = "2017-05-24T00:00:00Z"
+
+minimum_group_observations = 5
+bootstrap_resamples = 5000
+confidence_level = 0.95
+random_seed = 1729

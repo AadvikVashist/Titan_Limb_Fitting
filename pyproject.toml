@@ -46,6 +46,17 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/titan_limb"]
 
+[tool.hatch.build.targets.sdist]
+include = [
+  "/configs",
+  "/LICENSE",
+  "/README.md",
+  "/pyproject.toml",
+  "/src",
+  "/tests",
+  "/uv.lock",
+]
+
 [tool.ruff]
 line-length = 88
 target-version = "py312"
@@ -56,6 +67,7 @@ select = ["B", "E", "F", "I", "PERF", "PL", "RUF", "SIM", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004"]
+"src/titan_limb/cli.py" = ["PLR0913", "PLR0917"]
 
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers -q"

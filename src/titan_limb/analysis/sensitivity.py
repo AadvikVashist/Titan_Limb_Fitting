@@ -14,6 +14,7 @@ from titan_limb.config_bands import BandPolicy
 from titan_limb.config_seasons import SeasonPolicy
 from titan_limb.fitting.batch import fit_profile_table
 from titan_limb.fitting.quality import FitQualityPolicy, audit_fit_table
+from titan_limb.io.atomic import atomic_write_csv, atomic_write_parquet
 from titan_limb.io.observations import attach_observation_metadata
 from titan_limb.processing.fit_filter import filter_profiles_by_emission
 
@@ -85,7 +86,6 @@ def write_sensitivity_table(
         band_policy,
         season_policy,
     )
-    output.parent.mkdir(parents=True, exist_ok=True)
-    result.write_parquet(output, compression="zstd", statistics=True)
-    result.write_csv(output.with_suffix(".csv"))
+    atomic_write_parquet(result, output)
+    atomic_write_csv(result, output.with_suffix(".csv"))
     return result

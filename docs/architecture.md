@@ -32,8 +32,10 @@ arrays exactly under the locked environment.
 
 `pipeline` runs all selected raw cube pairs, saves the sorted profiles, applies
 the declared 25-degree inner cutoff, fits each profile, and writes both per-cube
-and combined Parquet files. A cube with all three outputs can resume without
-work. `validation.raw` keeps the full comparison with the saved run.
+and combined Parquet files. It writes outputs atomically. A cube resumes only
+when its receipt matches the current cube hashes, fit cutoff, code revision,
+dependency lock, and output hashes. `validation.raw` keeps the full comparison
+with the saved run and writes a machine-readable gate report.
 
 `fitting.optimizer` holds interpolation, smoothing, quadratic fitting,
 covariance, and R² selection. It returns all three candidates and the selected
@@ -61,7 +63,13 @@ enough to support an interval. Decision 0005 states the limits of that interval.
 time, phase, and distance correlations for each band. `analysis.sensitivity`
 repeats the fit and science summaries across the declared cutoff and quality
 grid. `simulations.srtc` inventories all synthetic cases and runs fixed-seed
-scikit-learn comparisons without import-time file or plot work.
+scikit-learn comparisons without import-time file or plot work. Malformed
+SRTC++ file names remain in a rejection ledger with a reason.
+
+`provenance` writes typed run receipts. `rejections` defines the shared cube,
+band, profile, fit, and input rejection record. `validation.gates` writes checks
+before callers return a nonzero status. `io.atomic` prevents partial text, CSV,
+and Parquet files from replacing the last complete result.
 
 `plotting.figures` reads accepted result tables and writes headless Seaborn
 figures. It does not alter or filter the saved results. The transition plot
