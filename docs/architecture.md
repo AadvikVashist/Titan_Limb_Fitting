@@ -17,6 +17,11 @@ selected-fit pickle into one row per cube, band, and hemisphere. Failed legacy
 fits remain rows with a clear status and reason. The writer stores the rows as
 compressed Parquet for fast Polars scans.
 
+`io.vims` is the only new PyVIMS boundary. It loads cubes on demand, so package
+imports do not parse cube data or import PyVIMS. `processing.geometry` contains
+the first pure profile functions. See `docs/decisions/0001-opencv-raster-drift.md`
+before using them to replace saved profiles.
+
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
 
