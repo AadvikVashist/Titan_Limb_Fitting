@@ -12,6 +12,11 @@ typed Python package with explicit commands and stable data formats.
 - `simulations`: processes SRTC++ cases and trains comparison models.
 - `plotting`: renders accepted result tables without changing them.
 
+The first finished input boundary is `io.legacy`. It converts each saved
+selected-fit pickle into one row per cube, band, and hemisphere. Failed legacy
+fits remain rows with a clear status and reason. The writer stores the rows as
+compressed Parquet for fast Polars scans.
+
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
 
@@ -19,4 +24,3 @@ write files, display plots, or prompt the user.
 
 The `fitting_code` package is the legacy implementation. It remains available for
 comparison until reference-output tests cover each replacement path.
-

@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 
 from titan_limb.config import DEFAULT_CONFIG_PATH, load_settings
+from titan_limb.io.legacy import read_selected_fit_directory, write_selected_fit_parquet
 from titan_limb.manifest import (
     ValidationStatus,
     create_manifest,
@@ -13,6 +14,7 @@ from titan_limb.manifest import (
     validate_manifest,
     write_manifest,
 )
+from titan_limb.models.core import FitStatus
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 data_app = typer.Typer(no_args_is_help=True)
@@ -52,3 +54,18 @@ def validate_command(
     typer.echo(result.model_dump_json(indent=2))
     if result.status is ValidationStatus.INVALID:
         raise typer.Exit(code=1)
+
+
+@data_app.command("migrate-selected-fits")
+def migrate_selected_fits_command(
+    source_dir: Annotated[Path, typer.Option(exists=True, file_okay=False)],
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/legacy-selected-fits.parquet"
+    ),
+) -> None:
+    records = read_selected_fit_directory(source_dir)
+    write_selected_fit_parquet(records, output)
+    failures = sum(record.status is FitStatus.FAILED for record in records)
+    typer.echo(f"rows={len(records)}")
+    typer.echo(f"failed={failures}")
+    typer.echo(f"output={output.resolve()}")

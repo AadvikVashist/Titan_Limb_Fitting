@@ -60,6 +60,7 @@ select = ["B", "E", "F", "I", "PERF", "PL", "RUF", "SIM", "UP"]
 [tool.pytest.ini_options]
 addopts = "--strict-config --strict-markers -q"
 testpaths = ["tests"]
+markers = ["real_data: checks against the preserved local Titan data"]
 
 [tool.coverage.run]
 branch = true
@@ -71,4 +72,3 @@ show_missing = true
 
 [tool.ty.environment]
 python-version = "3.12"
-

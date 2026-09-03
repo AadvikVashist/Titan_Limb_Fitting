@@ -19,3 +19,6 @@ The source checkout had material uncommitted changes before modernization:
 The modernization branch starts from the committed source state and does not
 include or alter those source-checkout changes.
 
+`selected-fits-summary.json` records the row counts and schema from converting
+all 29 saved selected-fit pickles. The generated Parquet file stays under the
+ignored `artifacts/` directory.

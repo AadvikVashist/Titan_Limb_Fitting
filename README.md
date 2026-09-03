@@ -36,8 +36,16 @@ just validate-manifest /absolute/path/to/Titan_Limb_Fitting/data
 The manifest records each file's relative path, byte size, modification time,
 and SHA-256 digest. It does not alter source data.
 
+## Convert saved fits
+
+```bash
+just migrate-selected-fits /absolute/path/to/Titan_Limb_Fitting/data/selected_fits
+```
+
+This reads the old pickles without changing them and writes one compressed,
+typed Parquet table to `artifacts/processed/legacy-selected-fits.parquet`.
+
 ## Current migration rule
 
 Do not edit or delete legacy numerical code until the matching new module has
 reference-output tests against existing Cassini or SRTC++ results.
-

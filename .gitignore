@@ -1,6 +1,7 @@
 /.DS_Store
 .env
 .idea/
+.cache/
 .pytest_cache/
 .ruff_cache/
 .uv-cache/

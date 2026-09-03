@@ -21,6 +21,15 @@ class SmoothingMethod(StrEnum):
 
 
 class FitStatus(StrEnum):
-    ACCEPTED = "accepted"
-    REJECTED = "rejected"
+    SUCCEEDED = "succeeded"
     FAILED = "failed"
+
+
+class Hemisphere(StrEnum):
+    NORTH = "north"
+    SOUTH = "south"
+
+
+class FitFailureReason(StrEnum):
+    MISSING_OPTIMAL_FIT = "missing_optimal_fit"
+    MISSING_PARAMETERS = "missing_parameters"

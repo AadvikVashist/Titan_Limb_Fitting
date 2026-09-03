@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "source_pattern": "data/selected_fits/C*.pkl",
+  "cube_count": 29,
+  "band_count": 352,
+  "wavelength_range_um": [0.35054, 5.13452],
+  "row_count": 20416,
+  "successful_row_count": 20299,
+  "failed_row_count": 117,
+  "channel_row_counts": {
+    "visible": 5568,
+    "infrared": 14848
+  },
+  "columns": [
+    "cube_id",
+    "band",
+    "wavelength_um",
+    "channel",
+    "hemisphere",
+    "slant_angle_degrees",
+    "profile_points",
+    "status",
+    "failure_reason",
+    "smoothing_method",
+    "intensity_center",
+    "u1",
+    "u2",
+    "u_sum",
+    "r_squared",
+    "covariance"
+  ],
+  "parquet_compression": "zstd"
+}
