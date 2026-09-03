@@ -22,6 +22,10 @@ imports do not parse cube data or import PyVIMS. `processing.geometry` contains
 the first pure profile functions. See `docs/decisions/0001-opencv-raster-drift.md`
 before using them to replace saved profiles.
 
+`processing.destripe` holds the visible-channel column correction. It has no
+plot or file access. All 96 bands from the first reference cube match the saved
+arrays exactly under the locked environment.
+
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
 

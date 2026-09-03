@@ -32,5 +32,8 @@ just migrate-profiles /absolute/path/to/Titan_Limb_Fitting/data/sorted_and_filte
 This creates 163,328 profile rows with 5,562,272 selected points. The source
 pickles stay unchanged.
 
+The real-data check also rebuilds all 96 visible bands for the first reference
+cube and requires exact agreement with the saved destriped arrays.
+
 Full scientific reproduction commands will follow as each old numerical stage
 gets a tested replacement.

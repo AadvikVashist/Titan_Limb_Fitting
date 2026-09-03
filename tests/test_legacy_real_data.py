@@ -11,6 +11,7 @@ import pytest
 from titan_limb.io.legacy import read_selected_fit_pickle
 from titan_limb.io.vims import find_cube_pair, load_cube_pair
 from titan_limb.models.core import Hemisphere
+from titan_limb.processing.destripe import destripe_visible
 from titan_limb.processing.geometry import find_image_center, radial_line_indices
 
 DATA_ENV = "TITAN_LEGACY_SELECTED_DIR"
@@ -81,3 +82,18 @@ def test_reference_cube_load_and_first_radial_line() -> None:
     assert len(actual_pixels) == 43
     assert expected_pixels - actual_pixels == set()
     assert actual_pixels - expected_pixels == {(38, 30)}
+
+
+@pytest.mark.real_data
+def test_reference_visible_cube_destriping() -> None:
+    data_dir = legacy_selected_dir().parent
+    pair = find_cube_pair(data_dir / "original_cubes", REFERENCE_CUBE)
+    visible, _ = load_cube_pair(pair)
+    analysis_path = data_dir / "cube_analysis" / f"{REFERENCE_CUBE}.pkl"
+    with analysis_path.open("rb") as source:
+        analysis = pickle.load(source)
+    expected_bands = analysis["meta"]["cube_vis"]["bands"]
+
+    for band in range(1, 97):
+        actual = destripe_visible(visible[band], visible.ground)
+        np.testing.assert_array_equal(actual, expected_bands[band - 1])
