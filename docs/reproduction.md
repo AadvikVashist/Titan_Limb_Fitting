@@ -45,5 +45,14 @@ The default audit yields 19,900 eligible rows, 399 review rows with negative
 R², and 117 ineligible failed rows. It keeps every row and writes every reason.
 Candidate threshold effects are frozen in `baseline/fit-quality-summary.json`.
 
+## Build transition crossings
+
+```bash
+just analyze-transitions
+```
+
+This produces 60 crossing rows for 58 cube/hemisphere series. Two north series
+have two crossings and remain explicit review cases.
+
 Full scientific reproduction commands will follow as each old numerical stage
 gets a tested replacement.

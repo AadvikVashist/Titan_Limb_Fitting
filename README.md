@@ -61,6 +61,14 @@ The default audit rejects failed or malformed fits and sends negative-R² fits
 to review. Optional R² and coefficient limits remain off until scientific
 review sets them.
 
+Build explicit wavelength crossings from eligible fits:
+
+```bash
+just analyze-transitions
+```
+
+The result keeps multiple crossings as separate rows.
+
 ## Current migration rule
 
 Do not edit or delete legacy numerical code until the matching new module has

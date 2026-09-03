@@ -38,3 +38,6 @@ reference-test source_dir:
 
 audit-fits source="artifacts/processed/legacy-selected-fits.parquet" output="artifacts/processed/fit-quality.parquet":
     UV_CACHE_DIR=.uv-cache uv run titan-limb fits audit --source "{{source}}" --output "{{output}}"
+
+analyze-transitions fits="artifacts/processed/legacy-selected-fits.parquet" quality="artifacts/processed/fit-quality.parquet" output="artifacts/processed/transitions.parquet":
+    UV_CACHE_DIR=.uv-cache uv run titan-limb analyze transitions --fits "{{fits}}" --quality "{{quality}}" --bands configs/bands.toml --output "{{output}}"

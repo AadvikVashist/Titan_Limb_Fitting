@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "input_fit_rows": 20416,
+  "eligible_fit_rows": 19900,
+  "legacy_allowed_band_count": 141,
+  "cube_count": 29,
+  "cube_hemisphere_series": 58,
+  "crossing_rows": 60,
+  "single_crossing_series": 56,
+  "multiple_crossing_series": 2,
+  "multiple_crossings": [
+    {
+      "cube_id": "C1861904325_1",
+      "hemisphere": "north",
+      "wavelengths_um": [1.4911089829943316, 2.6222595598532847],
+      "legacy_saved_mean_um": 2.040672980993665
+    },
+    {
+      "cube_id": "C1875658704_1",
+      "hemisphere": "north",
+      "wavelengths_um": [2.199831310436812, 2.634127435811937],
+      "legacy_saved_mean_um": 2.403319299766589
+    }
+  ],
+  "exact_matches_to_saved_series": 53,
+  "changed_single_crossing_series": 3,
+  "change_reason": "quality gate removes paired bands when either hemisphere requires review"
+}

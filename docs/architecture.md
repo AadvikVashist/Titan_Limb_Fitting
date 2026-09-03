@@ -34,6 +34,10 @@ fit. The accepted package-upgrade tolerances are recorded in decision 0002.
 analysis may use only `eligible` rows. No R² or coefficient cutoff is active by
 default; those values need a stated scientific choice.
 
+`analysis.transitions` joins fits to quality results, requires paired eligible
+north and south rows, applies the central one-based band policy, and emits one
+row per crossing. It never averages multiple crossings.
+
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
 

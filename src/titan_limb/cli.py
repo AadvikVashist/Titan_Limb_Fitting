@@ -5,7 +5,9 @@ from typing import Annotated
 
 import typer
 
+from titan_limb.analysis.transitions import write_transition_parquet
 from titan_limb.config import DEFAULT_CONFIG_PATH, load_settings
+from titan_limb.config_bands import DEFAULT_BAND_CONFIG, load_band_policy
 from titan_limb.fitting.quality import FitQualityPolicy, audit_fit_parquet
 from titan_limb.io.legacy import read_selected_fit_directory, write_selected_fit_parquet
 from titan_limb.io.legacy_profiles import write_profile_directory
@@ -21,8 +23,10 @@ from titan_limb.models.core import FitStatus
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 data_app = typer.Typer(no_args_is_help=True)
 fits_app = typer.Typer(no_args_is_help=True)
+analyze_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(fits_app, name="fits")
+app.add_typer(analyze_app, name="analyze")
 
 
 @app.command()
@@ -77,6 +81,29 @@ def audit_fits_command(
     result = audit_fit_parquet(source, output, policy)
     for row in result.group_by("quality_status").len().sort("quality_status").rows():
         typer.echo(f"{row[0]}={row[1]}")
+    typer.echo(f"output={output.resolve()}")
+
+
+@analyze_app.command("transitions")
+def analyze_transitions_command(
+    fits: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/legacy-selected-fits.parquet"
+    ),
+    quality: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/fit-quality.parquet"
+    ),
+    bands: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = (
+        DEFAULT_BAND_CONFIG
+    ),
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/transitions.parquet"
+    ),
+) -> None:
+    result = write_transition_parquet(fits, quality, output, load_band_policy(bands))
+    typer.echo(f"rows={result.height}")
+    typer.echo(
+        f"crossings={result.filter(result['crossing_index'].is_not_null()).height}"
+    )
     typer.echo(f"output={output.resolve()}")
 
 
