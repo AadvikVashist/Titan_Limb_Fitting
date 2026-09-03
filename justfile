@@ -39,6 +39,18 @@ observations nantes_csv="fitting_code/ingestion/data/combined_nantes.csv" select
 reference-test source_dir:
     TITAN_LEGACY_SELECTED_DIR="{{source_dir}}" MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run pytest -m real_data
 
+build-raw cubes_dir selection_json="settings/s3xy_cubes.json" output_dir="artifacts/raw":
+    MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb data build-raw --cubes-dir "{{cubes_dir}}" --selection-json "{{selection_json}}" --output-dir "{{output_dir}}"
+
+validate-raw legacy_dir profiles="artifacts/raw/profiles.parquet" fits="artifacts/raw/fits.parquet":
+    MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb data validate-raw --profiles "{{profiles}}" --fits "{{fits}}" --legacy-dir "{{legacy_dir}}"
+
+sensitivity profiles="artifacts/raw/sorted-profiles.parquet" observations="artifacts/processed/observations.parquet":
+    MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb analyze sensitivity --profiles "{{profiles}}" --observations "{{observations}}"
+
+srtc source image_dir:
+    MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb simulate srtc --source "{{source}}" --image-dir "{{image_dir}}"
+
 audit-fits source="artifacts/processed/legacy-selected-fits.parquet" output="artifacts/processed/fit-quality.parquet":
     UV_CACHE_DIR=.uv-cache uv run titan-limb fits audit --source "{{source}}" --output "{{output}}"
 

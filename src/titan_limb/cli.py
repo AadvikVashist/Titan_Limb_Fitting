@@ -1,5 +1,6 @@
 """Command-line entry points for repeatable Titan limb work."""
 
+from dataclasses import asdict
 from pathlib import Path
 from typing import Annotated
 
@@ -8,7 +9,9 @@ import typer
 
 from titan_limb.analysis.asymmetry import write_asymmetry_parquet
 from titan_limb.analysis.seasons import write_seasonal_parquet
+from titan_limb.analysis.sensitivity import write_sensitivity_table
 from titan_limb.analysis.transitions import write_transition_parquet
+from titan_limb.analysis.trust import write_band_trust_parquet
 from titan_limb.config import DEFAULT_CONFIG_PATH, load_settings
 from titan_limb.config_bands import DEFAULT_BAND_CONFIG, load_band_policy
 from titan_limb.config_seasons import DEFAULT_SEASON_CONFIG, load_season_policy
@@ -19,6 +22,7 @@ from titan_limb.io.observations import (
     read_selected_observations,
     write_observations_parquet,
 )
+from titan_limb.io.selection import read_selected_cube_ids
 from titan_limb.manifest import (
     ValidationStatus,
     create_manifest,
@@ -27,16 +31,21 @@ from titan_limb.manifest import (
     write_manifest,
 )
 from titan_limb.models.core import FitStatus
+from titan_limb.pipeline import build_raw_dataset
+from titan_limb.simulations.srtc import write_srtc_analysis
+from titan_limb.validation.raw import write_raw_validation
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 data_app = typer.Typer(no_args_is_help=True)
 fits_app = typer.Typer(no_args_is_help=True)
 analyze_app = typer.Typer(no_args_is_help=True)
 plot_app = typer.Typer(no_args_is_help=True)
+simulation_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(fits_app, name="fits")
 app.add_typer(analyze_app, name="analyze")
 app.add_typer(plot_app, name="plot")
+app.add_typer(simulation_app, name="simulate")
 
 
 @app.command()
@@ -91,6 +100,60 @@ def observations_command(
     write_observations_parquet(records, output)
     typer.echo(f"rows={len(records)}")
     typer.echo(f"output={output.resolve()}")
+
+
+@data_app.command("build-raw")
+def build_raw_command(
+    cubes_dir: Annotated[Path, typer.Option(exists=True, file_okay=False)],
+    selection_json: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "settings/s3xy_cubes.json"
+    ),
+    output_dir: Annotated[Path, typer.Option()] = Path("artifacts/raw"),
+    minimum_emission_degrees: Annotated[float, typer.Option()] = 25.0,
+    resume: Annotated[bool, typer.Option()] = True,
+) -> None:
+    report = build_raw_dataset(
+        cubes_dir,
+        read_selected_cube_ids(selection_json),
+        output_dir,
+        minimum_emission_degrees=minimum_emission_degrees,
+        resume=resume,
+    )
+    for key, value in asdict(report).items():
+        typer.echo(f"{key}={value}")
+    typer.echo(f"output={output_dir.resolve()}")
+
+
+@data_app.command("validate-raw")
+def validate_raw_command(
+    profiles: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/raw/profiles.parquet"
+    ),
+    fits: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/raw/fits.parquet"
+    ),
+    legacy_dir: Annotated[Path, typer.Option(exists=True, file_okay=False)] = Path(
+        "data/selected_fits"
+    ),
+    output_dir: Annotated[Path, typer.Option()] = Path("artifacts/reports"),
+) -> None:
+    summary = write_raw_validation(profiles, fits, legacy_dir, output_dir)
+    for key, value in asdict(summary).items():
+        typer.echo(f"{key}={value}")
+    typer.echo(f"output={output_dir.resolve()}")
+
+
+@simulation_app.command("srtc")
+def simulate_srtc_command(
+    source: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
+    image_dir: Annotated[Path, typer.Option(exists=True, file_okay=False)],
+    output_dir: Annotated[Path, typer.Option()] = Path("artifacts/simulations"),
+) -> None:
+    metrics, importance = write_srtc_analysis(source, image_dir, output_dir)
+    for row in metrics.iter_rows(named=True):
+        typer.echo(f"{row['model']}_r_squared={row['r_squared']}")
+    typer.echo(f"top_feature={importance.item(0, 'feature')}")
+    typer.echo(f"output={output_dir.resolve()}")
 
 
 @fits_app.command("audit")
@@ -190,6 +253,50 @@ def analyze_seasons_command(
     typer.echo(f"summary_rows={summary.height}")
     typer.echo(f"cube_output={cube_output.resolve()}")
     typer.echo(f"summary_output={summary_output.resolve()}")
+
+
+@analyze_app.command("trust")
+def analyze_trust_command(
+    fits: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/raw/fits.parquet"
+    ),
+    quality: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/raw/fit-quality.parquet"
+    ),
+    observations: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/observations.parquet"
+    ),
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/band-trust.parquet"
+    ),
+) -> None:
+    result = write_band_trust_parquet(fits, quality, observations, output)
+    typer.echo(f"rows={result.height}")
+    typer.echo(f"trusted={result.filter(pl.col('trusted')).height}")
+    typer.echo(f"output={output.resolve()}")
+
+
+@analyze_app.command("sensitivity")
+def analyze_sensitivity_command(
+    profiles: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/raw/sorted-profiles.parquet"
+    ),
+    observations: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/observations.parquet"
+    ),
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/sensitivity.parquet"
+    ),
+) -> None:
+    result = write_sensitivity_table(
+        profiles,
+        observations,
+        output,
+        load_band_policy(DEFAULT_BAND_CONFIG),
+        load_season_policy(DEFAULT_SEASON_CONFIG),
+    )
+    typer.echo(f"rows={result.height}")
+    typer.echo(f"output={output.resolve()}")
 
 
 @plot_app.command("transitions")

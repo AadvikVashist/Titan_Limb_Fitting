@@ -2,9 +2,9 @@
 
 Modern Python tools for the Cassini/VIMS Titan limb-profile study.
 
-The new package is being built beside the legacy `fitting_code/` implementation.
-Raw data and legacy results remain unchanged until reference-output checks cover
-their replacement.
+The typed package now covers raw cube profiles, limb fitting, fit checks,
+north--south and seasonal analysis, plots, sensitivity runs, and the SRTC++
+comparison. The legacy `fitting_code/` tree remains read-only for audit work.
 
 ## Setup
 
@@ -58,8 +58,8 @@ just audit-fits
 ```
 
 The default audit rejects failed or malformed fits and sends negative-R² fits
-to review. Optional R² and coefficient limits remain off until scientific
-review sets them.
+to review. The main analysis uses only eligible fits and applies no hard
+coefficient bound.
 
 Build the typed observation timeline from the preserved Nantes table and cube
 selection:
@@ -108,5 +108,14 @@ five observations.
 
 ## Current migration rule
 
-Do not edit or delete legacy numerical code until the matching new module has
-reference-output tests against existing Cassini or SRTC++ results.
+Build the full raw result with:
+
+```bash
+just build-raw /absolute/path/to/Titan_Limb_Fitting/data/original_cubes
+just validate-raw /absolute/path/to/Titan_Limb_Fitting/data/selected_fits
+just sensitivity
+```
+
+The accepted line raster comes from the locked current stack. The validation
+report records every difference from the old OpenCV output. Do not edit or
+delete the legacy numerical code; it remains the audit source.

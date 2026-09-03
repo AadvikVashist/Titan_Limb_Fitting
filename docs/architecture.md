@@ -30,6 +30,11 @@ before using them to replace saved profiles.
 plot or file access. All 96 bands from the first reference cube match the saved
 arrays exactly under the locked environment.
 
+`pipeline` runs all selected raw cube pairs, saves the sorted profiles, applies
+the declared 25-degree inner cutoff, fits each profile, and writes both per-cube
+and combined Parquet files. A cube with all three outputs can resume without
+work. `validation.raw` keeps the full comparison with the saved run.
+
 `fitting.optimizer` holds interpolation, smoothing, quadratic fitting,
 covariance, and R² selection. It returns all three candidates and the selected
 fit. The accepted package-upgrade tolerances are recorded in decision 0002.
@@ -51,6 +56,12 @@ significant. Its saved table uses the same observation fields.
 and channel. It assigns dated northern and southern seasons from
 `configs/seasons.toml`, then bootstraps whole cube values for groups large
 enough to support an interval. Decision 0005 states the limits of that interval.
+
+`analysis.trust` reports fit coverage, median fit quality, spread, and simple
+time, phase, and distance correlations for each band. `analysis.sensitivity`
+repeats the fit and science summaries across the declared cutoff and quality
+grid. `simulations.srtc` inventories all synthetic cases and runs fixed-seed
+scikit-learn comparisons without import-time file or plot work.
 
 `plotting.figures` reads accepted result tables and writes headless Seaborn
 figures. It does not alter or filter the saved results. The transition plot

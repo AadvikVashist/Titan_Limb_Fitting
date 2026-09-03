@@ -103,5 +103,38 @@ The method treats cubes, not bands, as the sampling units. It does not include
 fit covariance, time correlation, or instrument drift and does not support a
 significance claim. See decision 0005 and `baseline/seasonal-summary.json`.
 
-Full scientific reproduction commands will follow as each old numerical stage
-gets a tested replacement.
+The commands below cover the full raw and downstream rebuild.
+
+## Rebuild from raw VIMS cubes
+
+```bash
+just build-raw /absolute/path/to/data/original_cubes
+just validate-raw /absolute/path/to/data/selected_fits
+```
+
+The first command processes all 29 chosen cube pairs and writes per-cube and
+combined sorted profiles, fit-ready profiles, and fit rows. It resumes cubes
+that already have all three outputs. The default fit range is
+$25\textdegree{} < e \leq 89\textdegree{}$. The second command writes the full
+20,416-row comparison with the saved run. Current line-drawing results are the
+accepted source for new work; decision 0001 records the drift.
+
+## Run the rule grid
+
+```bash
+just sensitivity
+```
+
+This performs full refits for 20, 25, and 30 degree inner cutoffs, then applies
+six fit-quality settings. It writes 108 seasonal rows to both Parquet and CSV.
+
+## Rebuild the SRTC++ comparison
+
+```bash
+just srtc \
+  "/absolute/path/to/Titan SRTC++ Analysis.csv" \
+  "/absolute/path/to/data/SRTC++/v1+v2"
+```
+
+This inventories all 1,889 image cases and writes the cleaned result table,
+held-out model metrics, feature importance, and a JSON report.

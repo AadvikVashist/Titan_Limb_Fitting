@@ -1,6 +1,6 @@
 # Transition crossing output
 
-Status: explicit crossings adopted; final scientific selection open
+Status: adopted 3 September 2026
 
 The compatibility detector keeps the old inputs and method: the one-based band
 exclusion list, Gaussian smoothing with sigma 4, PCHIP interpolation, 3,000
@@ -16,5 +16,7 @@ series shift because quality review removes one or more paired bands. The two
 multi-crossing series also change slightly and remain unresolved. The baseline
 report records the values.
 
-No paper result should reduce a multi-crossing series to one value until we set
-and test a selection rule.
+A series with one crossing can enter scalar transition summaries. A series with
+more than one crossing stays in the row-level result and figures but does not
+enter a scalar summary. We do not choose or average crossings without a physical
+reason. The paper must name each excluded multi-crossing series.

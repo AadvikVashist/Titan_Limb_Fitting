@@ -17,6 +17,8 @@ class VimsCube(Protocol):
     bands: NDArray[np.integer]
     wvlns: NDArray[np.float64]
     eme: NDArray[np.float64]
+    inc: NDArray[np.float64]
+    lat: NDArray[np.float64]
     ground: NDArray[np.bool_]
 
     def __getitem__(self, band: int) -> NDArray[np.float32]: ...

@@ -33,6 +33,8 @@ class Hemisphere(StrEnum):
 class FitFailureReason(StrEnum):
     MISSING_OPTIMAL_FIT = "missing_optimal_fit"
     MISSING_PARAMETERS = "missing_parameters"
+    TOO_FEW_PROFILE_POINTS = "too_few_profile_points"
+    OPTIMIZATION_FAILED = "optimization_failed"
 
 
 class QualityStatus(StrEnum):

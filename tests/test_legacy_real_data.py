@@ -14,6 +14,10 @@ from titan_limb.io.vims import find_cube_pair, load_cube_pair
 from titan_limb.models.core import Hemisphere, SmoothingMethod
 from titan_limb.processing.destripe import destripe_visible
 from titan_limb.processing.geometry import find_image_center, radial_line_indices
+from titan_limb.processing.orientation import (
+    find_north_orientation,
+    illumination_angle,
+)
 
 DATA_ENV = "TITAN_LEGACY_SELECTED_DIR"
 REFERENCE_CUBE = "C1477456872_1"
@@ -71,6 +75,16 @@ def test_reference_cube_load_and_first_radial_line() -> None:
 
     center = find_image_center(visible.eme)
     assert center.subpixel == pytest.approx((24.875, 28.0))
+    visible_north = find_north_orientation(visible.lat, center)
+    assert visible_north == pytest.approx(176.09482167352536)
+    assert illumination_angle(visible.inc, center, visible_north) == pytest.approx(
+        138.90517832647464
+    )
+
+    infrared_center = find_image_center(infrared.eme)
+    infrared_north = find_north_orientation(infrared.lat, infrared_center)
+    assert infrared_center.subpixel == pytest.approx((26.25, 26.75))
+    assert infrared_north == pytest.approx(177.22685185185185)
 
     analysis_path = data_dir / "cube_analysis" / f"{REFERENCE_CUBE}.pkl"
     with analysis_path.open("rb") as source:

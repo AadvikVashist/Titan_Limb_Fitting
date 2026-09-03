@@ -1,6 +1,6 @@
 # Seasonal grouping and uncertainty
 
-Status: descriptive phase comparison adopted; formal inference open
+Status: descriptive phase comparison adopted; fit errors added
 
 The northern season boundaries are dated config, not rough decimal-year
 cutoffs. Northern spring begins on 11 August 2009, the Saturn and Titan vernal
@@ -24,5 +24,9 @@ no interval. The current data have 12 winter, 16 spring, and one summer cube per
 channel, so the summer result stays descriptive.
 
 These intervals describe sampling variation among the selected observations.
-They do not include fit covariance, band-selection uncertainty, time
-correlation, or instrument drift. The output makes no significance claim.
+The band-level asymmetry table now propagates each fit covariance to
+`u1 + u2`, then combines the north and south standard errors in quadrature.
+Season intervals still describe variation among whole observations. They do
+not yet fold the band-level fit errors into a single formal test, and they do
+not include band-selection uncertainty, time correlation, or instrument drift.
+The output makes no significance claim.
