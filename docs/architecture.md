@@ -47,6 +47,11 @@ contains the observation time, decimal year, selection label, and flyby.
 stores direct north-minus-south differences without treating them as
 significant. Its saved table uses the same observation fields.
 
+`plotting.figures` reads accepted result tables and writes headless Seaborn
+figures. It does not alter or filter the saved results. The transition plot
+keeps every crossing. The asymmetry plot groups by VIMS band before calculating
+the median and quartiles across observations.
+
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
 

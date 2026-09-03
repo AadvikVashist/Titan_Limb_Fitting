@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Annotated
 
+import polars as pl
 import typer
 
 from titan_limb.analysis.asymmetry import write_asymmetry_parquet
@@ -24,14 +25,20 @@ from titan_limb.manifest import (
     write_manifest,
 )
 from titan_limb.models.core import FitStatus
+from titan_limb.plotting.figures import (
+    plot_asymmetry_spectrum,
+    plot_transition_timeline,
+)
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 data_app = typer.Typer(no_args_is_help=True)
 fits_app = typer.Typer(no_args_is_help=True)
 analyze_app = typer.Typer(no_args_is_help=True)
+plot_app = typer.Typer(no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(fits_app, name="fits")
 app.add_typer(analyze_app, name="analyze")
+app.add_typer(plot_app, name="plot")
 
 
 @app.command()
@@ -157,6 +164,32 @@ def analyze_asymmetry_command(
         fits, quality, observations, output, load_band_policy(bands)
     )
     typer.echo(f"rows={result.height}")
+    typer.echo(f"output={output.resolve()}")
+
+
+@plot_app.command("transitions")
+def plot_transitions_command(
+    source: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/transitions.parquet"
+    ),
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/figures/transition-timeline.png"
+    ),
+) -> None:
+    plot_transition_timeline(pl.read_parquet(source), output)
+    typer.echo(f"output={output.resolve()}")
+
+
+@plot_app.command("asymmetry")
+def plot_asymmetry_command(
+    source: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/asymmetry.parquet"
+    ),
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/figures/asymmetry-spectrum.png"
+    ),
+) -> None:
+    plot_asymmetry_spectrum(pl.read_parquet(source), output)
     typer.echo(f"output={output.resolve()}")
 
 

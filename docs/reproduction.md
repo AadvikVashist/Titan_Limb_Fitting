@@ -75,5 +75,17 @@ This writes 4,067 paired eligible rows across all 29 cubes and 141 allowed
 bands. Each row includes its observation time and decimal year. The output is
 descriptive until uncertainty rules are added.
 
+## Render global figures
+
+```bash
+just figures
+```
+
+This writes `transition-timeline.png` and `asymmetry-spectrum.png` under
+`artifacts/figures/`. The transition figure marks the two series with more than
+one crossing. The asymmetry figure shows each band's median and middle half
+across the selected observations; the shaded range is not a confidence
+interval.
+
 Full scientific reproduction commands will follow as each old numerical stage
 gets a tested replacement.
