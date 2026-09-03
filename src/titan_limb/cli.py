@@ -7,9 +7,11 @@ import polars as pl
 import typer
 
 from titan_limb.analysis.asymmetry import write_asymmetry_parquet
+from titan_limb.analysis.seasons import write_seasonal_parquet
 from titan_limb.analysis.transitions import write_transition_parquet
 from titan_limb.config import DEFAULT_CONFIG_PATH, load_settings
 from titan_limb.config_bands import DEFAULT_BAND_CONFIG, load_band_policy
+from titan_limb.config_seasons import DEFAULT_SEASON_CONFIG, load_season_policy
 from titan_limb.fitting.quality import FitQualityPolicy, audit_fit_parquet
 from titan_limb.io.legacy import read_selected_fit_directory, write_selected_fit_parquet
 from titan_limb.io.legacy_profiles import write_profile_directory
@@ -25,10 +27,6 @@ from titan_limb.manifest import (
     write_manifest,
 )
 from titan_limb.models.core import FitStatus
-from titan_limb.plotting.figures import (
-    plot_asymmetry_spectrum,
-    plot_transition_timeline,
-)
 
 app = typer.Typer(no_args_is_help=True, pretty_exceptions_show_locals=False)
 data_app = typer.Typer(no_args_is_help=True)
@@ -167,6 +165,33 @@ def analyze_asymmetry_command(
     typer.echo(f"output={output.resolve()}")
 
 
+@analyze_app.command("seasons")
+def analyze_seasons_command(
+    asymmetry: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/asymmetry.parquet"
+    ),
+    seasons: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = (
+        DEFAULT_SEASON_CONFIG
+    ),
+    cube_output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/seasonal-cubes.parquet"
+    ),
+    summary_output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/seasonal-summary.parquet"
+    ),
+) -> None:
+    cube_table, summary = write_seasonal_parquet(
+        asymmetry,
+        cube_output,
+        summary_output,
+        load_season_policy(seasons),
+    )
+    typer.echo(f"cube_rows={cube_table.height}")
+    typer.echo(f"summary_rows={summary.height}")
+    typer.echo(f"cube_output={cube_output.resolve()}")
+    typer.echo(f"summary_output={summary_output.resolve()}")
+
+
 @plot_app.command("transitions")
 def plot_transitions_command(
     source: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
@@ -176,6 +201,9 @@ def plot_transitions_command(
         "artifacts/figures/transition-timeline.png"
     ),
 ) -> None:
+    # Keep non-plot commands free of Matplotlib startup and cache work.
+    from titan_limb.plotting.figures import plot_transition_timeline  # noqa: PLC0415
+
     plot_transition_timeline(pl.read_parquet(source), output)
     typer.echo(f"output={output.resolve()}")
 
@@ -189,7 +217,37 @@ def plot_asymmetry_command(
         "artifacts/figures/asymmetry-spectrum.png"
     ),
 ) -> None:
+    # Keep non-plot commands free of Matplotlib startup and cache work.
+    from titan_limb.plotting.figures import plot_asymmetry_spectrum  # noqa: PLC0415
+
     plot_asymmetry_spectrum(pl.read_parquet(source), output)
+    typer.echo(f"output={output.resolve()}")
+
+
+@plot_app.command("seasons")
+def plot_seasons_command(
+    cubes: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/seasonal-cubes.parquet"
+    ),
+    summary: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/seasonal-summary.parquet"
+    ),
+    seasons: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = (
+        DEFAULT_SEASON_CONFIG
+    ),
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/figures/seasonal-asymmetry.png"
+    ),
+) -> None:
+    # Keep non-plot commands free of Matplotlib startup and cache work.
+    from titan_limb.plotting.figures import plot_seasonal_timeline  # noqa: PLC0415
+
+    plot_seasonal_timeline(
+        pl.read_parquet(cubes),
+        pl.read_parquet(summary),
+        output,
+        load_season_policy(seasons),
+    )
     typer.echo(f"output={output.resolve()}")
 
 

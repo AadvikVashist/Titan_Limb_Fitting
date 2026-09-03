@@ -87,5 +87,21 @@ one crossing. The asymmetry figure shows each band's median and middle half
 across the selected observations; the shaded range is not a confidence
 interval.
 
+## Build the seasonal phase summary
+
+```bash
+just analyze-seasons
+just seasonal-figure
+```
+
+The first command writes 58 cube-channel rows and six phase summaries. There
+are 12 northern-winter, 16 northern-spring, and one northern-summer observation
+per channel. Only winter and spring receive fixed-seed 95 percent bootstrap
+intervals. The second command writes `seasonal-asymmetry.png`.
+
+The method treats cubes, not bands, as the sampling units. It does not include
+fit covariance, time correlation, or instrument drift and does not support a
+significance claim. See decision 0005 and `baseline/seasonal-summary.json`.
+
 Full scientific reproduction commands will follow as each old numerical stage
 gets a tested replacement.

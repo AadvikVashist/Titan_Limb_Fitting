@@ -6,8 +6,10 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from titan_limb.config_seasons import SeasonPolicy
 from titan_limb.plotting.figures import (
     plot_asymmetry_spectrum,
+    plot_seasonal_timeline,
     plot_transition_timeline,
     summarize_asymmetry_by_wavelength,
 )
@@ -90,3 +92,44 @@ def test_asymmetry_summary_is_separate_from_plotting() -> None:
         )
     )
     assert result.get_column("median_difference").to_list() == [0.25]
+
+
+def test_plot_seasonal_timeline_writes_image(tmp_path: Path) -> None:
+    policy = SeasonPolicy(
+        northern_vernal_equinox=datetime(2009, 8, 11, tzinfo=UTC),
+        northern_summer_solstice=datetime(2017, 5, 24, tzinfo=UTC),
+    )
+    seasons = ["northern winter", "northern spring", "northern summer"]
+    dates = [
+        datetime(2008, 1, 1, tzinfo=UTC),
+        datetime(2012, 1, 1, tzinfo=UTC),
+        datetime(2017, 6, 1, tzinfo=UTC),
+    ]
+    cube_rows = [
+        {
+            "channel": channel,
+            "mid_time": date,
+            "median_u_sum_difference": value,
+        }
+        for channel in ("visible", "infrared")
+        for date, value in zip(dates, (-0.1, 0.1, 0.2), strict=True)
+    ]
+    summary_rows = [
+        {
+            "channel": channel,
+            "northern_season": season,
+            "median_u_sum_difference": 0.0,
+            "bootstrap_lower": -0.1,
+            "bootstrap_upper": 0.1,
+            "interval_available": season != "northern summer",
+        }
+        for season in seasons
+        for channel in ("visible", "infrared")
+    ]
+    output = tmp_path / "seasons.png"
+
+    plot_seasonal_timeline(
+        pl.from_dicts(cube_rows), pl.from_dicts(summary_rows), output, policy
+    )
+
+    assert output.stat().st_size > 0

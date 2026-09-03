@@ -8,6 +8,8 @@ from matplotlib.axes import Axes
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
+from titan_limb.config_seasons import SeasonPolicy
+
 NORTH_COLOR = "#0072B2"
 SOUTH_COLOR = "#D55E00"
 VISIBLE_COLOR = "#0072B2"
@@ -130,3 +132,111 @@ def plot_asymmetry_spectrum(asymmetry: pl.DataFrame, output: Path) -> pl.DataFra
         figure.tight_layout()
     _save_figure(figure, output)
     return summary
+
+
+def plot_seasonal_timeline(
+    cube_table: pl.DataFrame,
+    summary: pl.DataFrame,
+    output: Path,
+    policy: SeasonPolicy,
+) -> None:
+    """Plot observation-level asymmetry with phase median intervals."""
+    if cube_table.is_empty():
+        raise ValueError("seasonal cube table contains no observations")
+    palette = {"visible": VISIBLE_COLOR, "infrared": INFRARED_COLOR}
+    season_spans = (
+        ("northern winter", None, policy.northern_vernal_equinox),
+        (
+            "northern spring",
+            policy.northern_vernal_equinox,
+            policy.northern_summer_solstice,
+        ),
+        ("northern summer", policy.northern_summer_solstice, None),
+    )
+    date_min = cube_table.get_column("mid_time").min()
+    date_max = cube_table.get_column("mid_time").max()
+    if date_min is None or date_max is None:
+        raise ValueError("seasonal cube table has no valid observation times")
+
+    with sns.axes_style("whitegrid"), sns.plotting_context("paper", font_scale=1.1):
+        figure = Figure(figsize=(9.0, 7.0))
+        FigureCanvasAgg(figure)
+        axes = figure.subplots(2, 1, sharex=True)
+        for axis, channel in zip(axes, ("visible", "infrared"), strict=True):
+            channel_data = cube_table.filter(pl.col("channel") == channel)
+            sns.scatterplot(
+                data=channel_data.to_dict(as_series=False),
+                x="mid_time",
+                y="median_u_sum_difference",
+                color=palette[channel],
+                s=42,
+                edgecolor="white",
+                linewidth=0.5,
+                ax=axis,
+            )
+            axis.axhline(0, color="#333333", linewidth=0.9, linestyle="--")
+            for season, configured_start, configured_end in season_spans:
+                start = configured_start or date_min
+                end = configured_end or date_max
+                result = summary.filter(
+                    (pl.col("channel") == channel)
+                    & (pl.col("northern_season") == season)
+                ).row(0, named=True)
+                if result["interval_available"]:
+                    axis.fill_between(
+                        [start, end],
+                        result["bootstrap_lower"],
+                        result["bootstrap_upper"],
+                        color=palette[channel],
+                        alpha=0.12,
+                        linewidth=0,
+                    )
+                    axis.hlines(
+                        result["median_u_sum_difference"],
+                        start,
+                        end,
+                        color=palette[channel],
+                        linewidth=1.5,
+                    )
+            axis.axvline(
+                policy.northern_vernal_equinox,
+                color="#555555",
+                linewidth=0.9,
+                linestyle=":",
+            )
+            axis.axvline(
+                policy.northern_summer_solstice,
+                color="#555555",
+                linewidth=0.9,
+                linestyle=":",
+            )
+            axis.set(
+                title=channel.capitalize(),
+                xlabel="",
+                ylabel=r"Median north minus south, $u_1 + u_2$",
+            )
+        axes[-1].set_xlabel("Observation date (UTC)")
+        axes[0].text(
+            policy.northern_vernal_equinox,
+            0.02,
+            "N vernal equinox",
+            transform=axes[0].get_xaxis_transform(),
+            rotation=90,
+            horizontalalignment="right",
+            verticalalignment="bottom",
+            color="#555555",
+        )
+        axes[0].text(
+            policy.northern_summer_solstice,
+            0.02,
+            "N summer solstice",
+            transform=axes[0].get_xaxis_transform(),
+            rotation=90,
+            horizontalalignment="right",
+            verticalalignment="bottom",
+            color="#555555",
+        )
+        figure.suptitle("Titan limb asymmetry across northern seasons")
+        figure.autofmt_xdate(rotation=0, ha="center")
+        figure.tight_layout()
+    _save_figure(figure, output)

@@ -48,6 +48,12 @@ analyze-transitions fits="artifacts/processed/legacy-selected-fits.parquet" qual
 analyze-asymmetry fits="artifacts/processed/legacy-selected-fits.parquet" quality="artifacts/processed/fit-quality.parquet" observations="artifacts/processed/observations.parquet" output="artifacts/processed/asymmetry.parquet":
     UV_CACHE_DIR=.uv-cache uv run titan-limb analyze asymmetry --fits "{{fits}}" --quality "{{quality}}" --observations "{{observations}}" --bands configs/bands.toml --output "{{output}}"
 
+analyze-seasons asymmetry="artifacts/processed/asymmetry.parquet" cube_output="artifacts/processed/seasonal-cubes.parquet" summary_output="artifacts/processed/seasonal-summary.parquet":
+    UV_CACHE_DIR=.uv-cache uv run titan-limb analyze seasons --asymmetry "{{asymmetry}}" --seasons configs/seasons.toml --cube-output "{{cube_output}}" --summary-output "{{summary_output}}"
+
 figures transitions="artifacts/processed/transitions.parquet" asymmetry="artifacts/processed/asymmetry.parquet" output_dir="artifacts/figures":
     MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb plot transitions --source "{{transitions}}" --output "{{output_dir}}/transition-timeline.png"
     MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb plot asymmetry --source "{{asymmetry}}" --output "{{output_dir}}/asymmetry-spectrum.png"
+
+seasonal-figure cubes="artifacts/processed/seasonal-cubes.parquet" summary="artifacts/processed/seasonal-summary.parquet" output="artifacts/figures/seasonal-asymmetry.png":
+    MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb plot seasons --cubes "{{cubes}}" --summary "{{summary}}" --seasons configs/seasons.toml --output "{{output}}"

@@ -95,6 +95,17 @@ This writes a dated transition plot and a bandwise asymmetry spectrum under
 `artifacts/figures/`. The asymmetry line shows the median across observations;
 its shaded range shows the middle half. It does not show a confidence interval.
 
+Build and plot the seasonal phase summary:
+
+```bash
+just analyze-seasons
+just seasonal-figure
+```
+
+The analysis reduces each cube to one spectral median per channel before it
+compares seasons. It writes bootstrap intervals only for phases with at least
+five observations.
+
 ## Current migration rule
 
 Do not edit or delete legacy numerical code until the matching new module has

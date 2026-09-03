@@ -38,3 +38,6 @@ ambiguous north series, and differences from the saved global result.
 
 `asymmetry-summary.json` records the number of paired eligible rows and basic
 descriptive values. It does not claim statistical significance.
+
+`seasonal-summary.json` records cube-level seasonal medians and fixed-seed
+bootstrap intervals. Summer has one observation and therefore no interval.

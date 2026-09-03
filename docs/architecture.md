@@ -47,10 +47,18 @@ contains the observation time, decimal year, selection label, and flyby.
 stores direct north-minus-south differences without treating them as
 significant. Its saved table uses the same observation fields.
 
+`analysis.seasons` reduces the asymmetry table to one spectral median per cube
+and channel. It assigns dated northern and southern seasons from
+`configs/seasons.toml`, then bootstraps whole cube values for groups large
+enough to support an interval. Decision 0005 states the limits of that interval.
+
 `plotting.figures` reads accepted result tables and writes headless Seaborn
 figures. It does not alter or filter the saved results. The transition plot
 keeps every crossing. The asymmetry plot groups by VIMS band before calculating
 the median and quartiles across observations.
+
+The seasonal timeline plots all cube-level values and the phase medians with
+their available intervals. It does not fit a cycle or a trend line.
 
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
