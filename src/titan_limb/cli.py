@@ -5,6 +5,7 @@ from typing import Annotated
 
 import typer
 
+from titan_limb.analysis.asymmetry import write_asymmetry_parquet
 from titan_limb.analysis.transitions import write_transition_parquet
 from titan_limb.config import DEFAULT_CONFIG_PATH, load_settings
 from titan_limb.config_bands import DEFAULT_BAND_CONFIG, load_band_policy
@@ -104,6 +105,26 @@ def analyze_transitions_command(
     typer.echo(
         f"crossings={result.filter(result['crossing_index'].is_not_null()).height}"
     )
+    typer.echo(f"output={output.resolve()}")
+
+
+@analyze_app.command("asymmetry")
+def analyze_asymmetry_command(
+    fits: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/legacy-selected-fits.parquet"
+    ),
+    quality: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/fit-quality.parquet"
+    ),
+    bands: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = (
+        DEFAULT_BAND_CONFIG
+    ),
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/asymmetry.parquet"
+    ),
+) -> None:
+    result = write_asymmetry_parquet(fits, quality, output, load_band_policy(bands))
+    typer.echo(f"rows={result.height}")
     typer.echo(f"output={output.resolve()}")
 
 

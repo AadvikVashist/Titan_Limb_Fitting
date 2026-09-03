@@ -54,5 +54,14 @@ just analyze-transitions
 This produces 60 crossing rows for 58 cube/hemisphere series. Two north series
 have two crossings and remain explicit review cases.
 
+## Build north-south differences
+
+```bash
+just analyze-asymmetry
+```
+
+This writes 4,067 paired eligible rows across all 29 cubes and 141 allowed
+bands. The output is descriptive until uncertainty rules are added.
+
 Full scientific reproduction commands will follow as each old numerical stage
 gets a tested replacement.

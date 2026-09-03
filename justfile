@@ -41,3 +41,6 @@ audit-fits source="artifacts/processed/legacy-selected-fits.parquet" output="art
 
 analyze-transitions fits="artifacts/processed/legacy-selected-fits.parquet" quality="artifacts/processed/fit-quality.parquet" output="artifacts/processed/transitions.parquet":
     UV_CACHE_DIR=.uv-cache uv run titan-limb analyze transitions --fits "{{fits}}" --quality "{{quality}}" --bands configs/bands.toml --output "{{output}}"
+
+analyze-asymmetry fits="artifacts/processed/legacy-selected-fits.parquet" quality="artifacts/processed/fit-quality.parquet" output="artifacts/processed/asymmetry.parquet":
+    UV_CACHE_DIR=.uv-cache uv run titan-limb analyze asymmetry --fits "{{fits}}" --quality "{{quality}}" --bands configs/bands.toml --output "{{output}}"

@@ -69,6 +69,12 @@ just analyze-transitions
 
 The result keeps multiple crossings as separate rows.
 
+Build the paired north-minus-south coefficient table:
+
+```bash
+just analyze-asymmetry
+```
+
 ## Current migration rule
 
 Do not edit or delete legacy numerical code until the matching new module has

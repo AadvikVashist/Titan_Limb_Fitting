@@ -32,3 +32,6 @@ effect of several possible R² and coefficient rules without choosing one.
 
 `transitions-summary.json` records the quality-gated crossing counts, the two
 ambiguous north series, and differences from the saved global result.
+
+`asymmetry-summary.json` records the number of paired eligible rows and basic
+descriptive values. It does not claim statistical significance.

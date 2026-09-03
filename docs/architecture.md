@@ -38,6 +38,9 @@ default; those values need a stated scientific choice.
 north and south rows, applies the central one-based band policy, and emits one
 row per crossing. It never averages multiple crossings.
 
+`analysis.asymmetry` pairs eligible north and south fits by cube and band. It
+stores direct north-minus-south differences without treating them as significant.
+
 Numerical functions receive values and return values. They do not read settings,
 write files, display plots, or prompt the user.
 
