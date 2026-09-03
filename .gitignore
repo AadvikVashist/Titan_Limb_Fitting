@@ -1,17 +1,4 @@
 /.DS_Store
-.env
-.idea/
-.cache/
-.pytest_cache/
-.ruff_cache/
-.uv-cache/
-.venv/
-.coverage
-configs/local.toml
-artifacts/
-data/raw/
-data/interim/
-data/processed/
 *µm_*.pkl
 settings/settings.json
 cumulative*.pkl
@@ -75,3 +62,4 @@ __pycache__
 
 # TeX auxiliary directory (auto-folder by some TeX editors)
 _tex/
+
