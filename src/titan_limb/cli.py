@@ -12,6 +12,10 @@ from titan_limb.config_bands import DEFAULT_BAND_CONFIG, load_band_policy
 from titan_limb.fitting.quality import FitQualityPolicy, audit_fit_parquet
 from titan_limb.io.legacy import read_selected_fit_directory, write_selected_fit_parquet
 from titan_limb.io.legacy_profiles import write_profile_directory
+from titan_limb.io.observations import (
+    read_selected_observations,
+    write_observations_parquet,
+)
 from titan_limb.manifest import (
     ValidationStatus,
     create_manifest,
@@ -66,6 +70,24 @@ def migrate_profiles_command(
     typer.echo(f"output={output.resolve()}")
 
 
+@data_app.command("observations")
+def observations_command(
+    nantes_csv: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "fitting_code/ingestion/data/combined_nantes.csv"
+    ),
+    selection_json: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "settings/s3xy_cubes.json"
+    ),
+    output: Annotated[Path, typer.Option()] = Path(
+        "artifacts/processed/observations.parquet"
+    ),
+) -> None:
+    records = read_selected_observations(nantes_csv, selection_json)
+    write_observations_parquet(records, output)
+    typer.echo(f"rows={len(records)}")
+    typer.echo(f"output={output.resolve()}")
+
+
 @fits_app.command("audit")
 def audit_fits_command(
     source: Annotated[Path, typer.Option(exists=True, dir_okay=False)],
@@ -93,6 +115,9 @@ def analyze_transitions_command(
     quality: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
         "artifacts/processed/fit-quality.parquet"
     ),
+    observations: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/observations.parquet"
+    ),
     bands: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = (
         DEFAULT_BAND_CONFIG
     ),
@@ -100,7 +125,9 @@ def analyze_transitions_command(
         "artifacts/processed/transitions.parquet"
     ),
 ) -> None:
-    result = write_transition_parquet(fits, quality, output, load_band_policy(bands))
+    result = write_transition_parquet(
+        fits, quality, observations, output, load_band_policy(bands)
+    )
     typer.echo(f"rows={result.height}")
     typer.echo(
         f"crossings={result.filter(result['crossing_index'].is_not_null()).height}"
@@ -116,6 +143,9 @@ def analyze_asymmetry_command(
     quality: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
         "artifacts/processed/fit-quality.parquet"
     ),
+    observations: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = Path(
+        "artifacts/processed/observations.parquet"
+    ),
     bands: Annotated[Path, typer.Option(exists=True, dir_okay=False)] = (
         DEFAULT_BAND_CONFIG
     ),
@@ -123,7 +153,9 @@ def analyze_asymmetry_command(
         "artifacts/processed/asymmetry.parquet"
     ),
 ) -> None:
-    result = write_asymmetry_parquet(fits, quality, output, load_band_policy(bands))
+    result = write_asymmetry_parquet(
+        fits, quality, observations, output, load_band_policy(bands)
+    )
     typer.echo(f"rows={result.height}")
     typer.echo(f"output={output.resolve()}")
 

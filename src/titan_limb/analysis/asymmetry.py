@@ -5,6 +5,7 @@ from pathlib import Path
 import polars as pl
 
 from titan_limb.config_bands import BandPolicy
+from titan_limb.io.observations import attach_observation_metadata
 from titan_limb.models.core import Hemisphere, QualityStatus
 
 FIT_KEYS = ["cube_id", "band", "hemisphere"]
@@ -55,11 +56,15 @@ def build_asymmetry_table(
 def write_asymmetry_parquet(
     fits_path: Path,
     quality_path: Path,
+    observations_path: Path,
     output: Path,
     band_policy: BandPolicy,
 ) -> pl.DataFrame:
-    result = build_asymmetry_table(
-        pl.read_parquet(fits_path), pl.read_parquet(quality_path), band_policy
+    result = attach_observation_metadata(
+        build_asymmetry_table(
+            pl.read_parquet(fits_path), pl.read_parquet(quality_path), band_policy
+        ),
+        pl.read_parquet(observations_path),
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     result.write_parquet(output, compression="zstd", statistics=True)

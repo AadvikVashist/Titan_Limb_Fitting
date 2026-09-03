@@ -30,6 +30,9 @@ columns, distances, emission angles, and brightness values as typed lists.
 `fit-quality-summary.json` records the default structural audit and shows the
 effect of several possible R² and coefficient rules without choosing one.
 
+`observations-summary.json` records the selected-cube count, UTC date span, and
+typed Parquet fields from the preserved Nantes metadata table.
+
 `transitions-summary.json` records the quality-gated crossing counts, the two
 ambiguous north series, and differences from the saved global result.
 

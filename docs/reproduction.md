@@ -45,6 +45,16 @@ The default audit yields 19,900 eligible rows, 399 review rows with negative
 R², and 117 ineligible failed rows. It keeps every row and writes every reason.
 Candidate threshold effects are frozen in `baseline/fit-quality-summary.json`.
 
+## Build the observation timeline
+
+```bash
+just observations
+```
+
+This reads `fitting_code/ingestion/data/combined_nantes.csv` and
+`settings/s3xy_cubes.json`. It writes 29 typed rows from 26 October 2004 through
+8 June 2017. See `baseline/observations-summary.json` for the frozen result.
+
 ## Build transition crossings
 
 ```bash
@@ -52,7 +62,8 @@ just analyze-transitions
 ```
 
 This produces 60 crossing rows for 58 cube/hemisphere series. Two north series
-have two crossings and remain explicit review cases.
+have two crossings and remain explicit review cases. Each row includes its
+observation time and decimal year.
 
 ## Build north-south differences
 
@@ -61,7 +72,8 @@ just analyze-asymmetry
 ```
 
 This writes 4,067 paired eligible rows across all 29 cubes and 141 allowed
-bands. The output is descriptive until uncertainty rules are added.
+bands. Each row includes its observation time and decimal year. The output is
+descriptive until uncertainty rules are added.
 
 Full scientific reproduction commands will follow as each old numerical stage
 gets a tested replacement.

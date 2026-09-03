@@ -10,6 +10,7 @@ from scipy.interpolate import PchipInterpolator
 from scipy.ndimage import gaussian_filter1d
 
 from titan_limb.config_bands import BandPolicy
+from titan_limb.io.observations import attach_observation_metadata
 from titan_limb.models.core import Hemisphere, QualityStatus
 
 FloatArray = NDArray[np.float64]
@@ -129,11 +130,15 @@ def build_transition_table(
 def write_transition_parquet(
     fits_path: Path,
     quality_path: Path,
+    observations_path: Path,
     output: Path,
     band_policy: BandPolicy,
 ) -> pl.DataFrame:
-    result = build_transition_table(
-        pl.read_parquet(fits_path), pl.read_parquet(quality_path), band_policy
+    result = attach_observation_metadata(
+        build_transition_table(
+            pl.read_parquet(fits_path), pl.read_parquet(quality_path), band_policy
+        ),
+        pl.read_parquet(observations_path),
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     result.write_parquet(output, compression="zstd", statistics=True)

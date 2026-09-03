@@ -33,14 +33,17 @@ migrate-selected-fits source_dir output="artifacts/processed/legacy-selected-fit
 migrate-profiles source_dir output="artifacts/processed/legacy-profiles.parquet":
     MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run titan-limb data migrate-profiles --source-dir "{{source_dir}}" --output "{{output}}"
 
+observations nantes_csv="fitting_code/ingestion/data/combined_nantes.csv" selection_json="settings/s3xy_cubes.json" output="artifacts/processed/observations.parquet":
+    UV_CACHE_DIR=.uv-cache uv run titan-limb data observations --nantes-csv "{{nantes_csv}}" --selection-json "{{selection_json}}" --output "{{output}}"
+
 reference-test source_dir:
     TITAN_LEGACY_SELECTED_DIR="{{source_dir}}" MPLCONFIGDIR=.cache/matplotlib UV_CACHE_DIR=.uv-cache uv run pytest -m real_data
 
 audit-fits source="artifacts/processed/legacy-selected-fits.parquet" output="artifacts/processed/fit-quality.parquet":
     UV_CACHE_DIR=.uv-cache uv run titan-limb fits audit --source "{{source}}" --output "{{output}}"
 
-analyze-transitions fits="artifacts/processed/legacy-selected-fits.parquet" quality="artifacts/processed/fit-quality.parquet" output="artifacts/processed/transitions.parquet":
-    UV_CACHE_DIR=.uv-cache uv run titan-limb analyze transitions --fits "{{fits}}" --quality "{{quality}}" --bands configs/bands.toml --output "{{output}}"
+analyze-transitions fits="artifacts/processed/legacy-selected-fits.parquet" quality="artifacts/processed/fit-quality.parquet" observations="artifacts/processed/observations.parquet" output="artifacts/processed/transitions.parquet":
+    UV_CACHE_DIR=.uv-cache uv run titan-limb analyze transitions --fits "{{fits}}" --quality "{{quality}}" --observations "{{observations}}" --bands configs/bands.toml --output "{{output}}"
 
-analyze-asymmetry fits="artifacts/processed/legacy-selected-fits.parquet" quality="artifacts/processed/fit-quality.parquet" output="artifacts/processed/asymmetry.parquet":
-    UV_CACHE_DIR=.uv-cache uv run titan-limb analyze asymmetry --fits "{{fits}}" --quality "{{quality}}" --bands configs/bands.toml --output "{{output}}"
+analyze-asymmetry fits="artifacts/processed/legacy-selected-fits.parquet" quality="artifacts/processed/fit-quality.parquet" observations="artifacts/processed/observations.parquet" output="artifacts/processed/asymmetry.parquet":
+    UV_CACHE_DIR=.uv-cache uv run titan-limb analyze asymmetry --fits "{{fits}}" --quality "{{quality}}" --observations "{{observations}}" --bands configs/bands.toml --output "{{output}}"

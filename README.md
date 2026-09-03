@@ -61,6 +61,16 @@ The default audit rejects failed or malformed fits and sends negative-R² fits
 to review. Optional R² and coefficient limits remain off until scientific
 review sets them.
 
+Build the typed observation timeline from the preserved Nantes table and cube
+selection:
+
+```bash
+just observations
+```
+
+This writes the 29 selected observation times and source metadata to
+`artifacts/processed/observations.parquet`.
+
 Build explicit wavelength crossings from eligible fits:
 
 ```bash

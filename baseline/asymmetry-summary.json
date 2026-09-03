@@ -3,6 +3,7 @@
   "difference_definition": "north minus south",
   "paired_eligible_rows": 4067,
   "cube_count": 29,
+  "observation_metadata_joined": true,
   "band_count": 141,
   "visible_rows": 2224,
   "infrared_rows": 1843,

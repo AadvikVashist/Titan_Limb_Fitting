@@ -4,6 +4,7 @@
   "eligible_fit_rows": 19900,
   "legacy_allowed_band_count": 141,
   "cube_count": 29,
+  "observation_metadata_joined": true,
   "cube_hemisphere_series": 58,
   "crossing_rows": 60,
   "single_crossing_series": 56,
